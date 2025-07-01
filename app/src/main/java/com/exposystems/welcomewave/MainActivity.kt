@@ -44,7 +44,7 @@ class MainActivity : ComponentActivity() {
 
                     composable(Screen.EmployeeSelect.route) {
                         EmployeeSelectScreen(
-                            onNextClicked = { employeeId ->
+                            onEmployeeSelected = { employeeId ->
                                 navController.navigate(Screen.GuestDetails.createRoute(employeeId))
                             }
                         )

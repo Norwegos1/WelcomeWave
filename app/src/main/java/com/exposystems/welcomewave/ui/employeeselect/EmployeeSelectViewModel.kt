@@ -14,7 +14,6 @@ import javax.inject.Inject
 
 data class EmployeeSelectUiState(
     val searchQuery: String = "",
-    val selectedEmployee: Employee? = null,
     val allEmployees: List<Employee> = emptyList()
 )
 
@@ -24,18 +23,15 @@ class EmployeeSelectViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
-    private val _selectedEmployee = MutableStateFlow<Employee?>(null)
-    private val _employees = employeeRepository.getEmployees() // This is a Flow from Room
+    private val _employees = employeeRepository.getEmployees()
 
-    // Combine all of our state Flows into a single UiState Flow
+    // Combine has been simplified to only use two flows
     val uiState = combine(
         _searchQuery,
-        _selectedEmployee,
         _employees
-    ) { query, selected, employees ->
+    ) { query, employees ->
         EmployeeSelectUiState(
             searchQuery = query,
-            selectedEmployee = selected,
             allEmployees = employees
         )
     }.stateIn(
@@ -48,8 +44,7 @@ class EmployeeSelectViewModel @Inject constructor(
         _searchQuery.update { query }
     }
 
-    fun onEmployeeSelected(employee: Employee) {
-        // Allow toggling selection
-        _selectedEmployee.update { if (it == employee) null else employee }
+    fun onClearSearch() {
+        _searchQuery.update { "" }
     }
 }

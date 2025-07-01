@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">WelcomeWave</string>
+    <string name="welcome_title">Welcome to Exposystems</string>
+    <string name="welcome_prompt">Tap anywhere to begin check-in</string>
 </resources>
