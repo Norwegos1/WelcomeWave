@@ -8,7 +8,6 @@ sealed class Screen(val route: String) {
     }
     data object Confirmation : Screen("confirmation_screen")
     data object AdminLogin : Screen("admin_login_screen")
-    data object AdminDashboard : Screen("admin_dashboard_screen")
     data object AdminEmployeeList : Screen("admin_employee_list_screen")
     data object AdminAddEditEmployee : Screen("admin_add_edit_employee_screen")
 }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
@@ -21,14 +22,19 @@ import com.exposystems.welcomewave.data.Employee
 fun AdminEmployeeListScreen(
     viewModel: AdminEmployeeListViewModel = hiltViewModel(),
     onAddEmployeeClicked: () -> Unit,
-    onNavigateUp: () -> Unit
+    onNavigateUp: () -> Unit // The missing parameter
 ) {
     val employees by viewModel.employees.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Manage Employees") }
+                title = { Text("Manage Employees") },
+                navigationIcon = { // Add the navigation icon to use the callback
+                    IconButton(onClick = onNavigateUp) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
             )
         },
         floatingActionButton = {

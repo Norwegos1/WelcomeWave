@@ -53,12 +53,9 @@ class MainActivity : ComponentActivity() {
                     composable(
                         route = Screen.GuestDetails.route,
                         arguments = listOf(navArgument("employeeId") { type = NavType.IntType })
-                    ) { backStackEntry ->
-                        val employeeId = backStackEntry.arguments?.getInt("employeeId") ?: -1
+                    ) {
                         GuestDetailsScreen(
-                            employeeId = employeeId,
                             onCheckInComplete = {
-                                // TODO: Add confirmation screen
                                 navController.navigate(Screen.Welcome.route) {
                                     popUpTo(Screen.Welcome.route) { inclusive = true }
                                 }
@@ -70,7 +67,8 @@ class MainActivity : ComponentActivity() {
                     composable(Screen.AdminLogin.route) {
                         AdminLoginScreen(
                             onLoginSuccess = {
-                                navController.navigate(Screen.AdminDashboard.route) {
+                                // Change this to navigate to the correct route
+                                navController.navigate(Screen.AdminEmployeeList.route) {
                                     popUpTo(Screen.AdminLogin.route) { inclusive = true }
                                 }
                             },
@@ -80,7 +78,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    composable(Screen.AdminDashboard.route) {
+                    composable(Screen.AdminEmployeeList.route) {
                         AdminEmployeeListScreen(
                             onAddEmployeeClicked = {
                                 navController.navigate(Screen.AdminAddEditEmployee.route)
