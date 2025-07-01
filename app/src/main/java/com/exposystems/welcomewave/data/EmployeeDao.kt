@@ -16,4 +16,7 @@ interface EmployeeDao {
 
     @Query("SELECT * FROM employees ORDER BY name ASC")
     fun getAllEmployees(): Flow<List<Employee>>
+
+    @Query("SELECT * FROM employees WHERE id = :id")
+    suspend fun getEmployeeById(id: Int): Employee?
 }

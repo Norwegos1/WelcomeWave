@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     composable(Screen.Welcome.route) {
                         WelcomeScreen(
-                            onScreenTapped = {
+                            onGuestNavigate = {
                                 navController.navigate(Screen.EmployeeSelect.route)
                             },
                             onAdminNavigate = {
@@ -41,6 +41,7 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     }
+
                     composable(Screen.EmployeeSelect.route) {
                         EmployeeSelectScreen(
                             onNextClicked = { employeeId ->
@@ -48,12 +49,14 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     }
+
                     composable(
                         route = Screen.GuestDetails.route,
                         arguments = listOf(navArgument("employeeId") { type = NavType.IntType })
                     ) { backStackEntry ->
                         val employeeId = backStackEntry.arguments?.getInt("employeeId") ?: -1
                         GuestDetailsScreen(
+                            employeeId = employeeId,
                             onCheckInComplete = {
                                 // TODO: Add confirmation screen
                                 navController.navigate(Screen.Welcome.route) {
@@ -76,10 +79,10 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     }
+
                     composable(Screen.AdminDashboard.route) {
                         AdminEmployeeListScreen(
                             onAddEmployeeClicked = {
-                                // This now navigates to our new form screen
                                 navController.navigate(Screen.AdminAddEditEmployee.route)
                             },
                             onNavigateUp = {
@@ -87,6 +90,7 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     }
+
                     composable(Screen.AdminAddEditEmployee.route) {
                         AdminAddEditEmployeeScreen(
                             onNavigateUp = {

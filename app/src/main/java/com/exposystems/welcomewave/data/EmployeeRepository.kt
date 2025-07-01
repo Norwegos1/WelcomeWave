@@ -20,4 +20,8 @@ class EmployeeRepository @Inject constructor(
     suspend fun deleteEmployee(employee: Employee) {
         employeeDao.delete(employee)
     }
+
+    suspend fun getEmployee(id: Int): Employee? {
+        return employeeDao.getEmployeeById(id)
+    }
 }
