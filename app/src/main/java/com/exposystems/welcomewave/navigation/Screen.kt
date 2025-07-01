@@ -1,0 +1,14 @@
+package com.exposystems.welcomewave.navigation
+
+sealed class Screen(val route: String) {
+    data object Welcome : Screen("welcome_screen")
+    data object EmployeeSelect : Screen("employee_select_screen")
+    data object GuestDetails : Screen("guest_details_screen/{employeeId}") {
+        fun createRoute(employeeId: Int) = "guest_details_screen/$employeeId"
+    }
+    data object Confirmation : Screen("confirmation_screen")
+    data object AdminLogin : Screen("admin_login_screen")
+    data object AdminDashboard : Screen("admin_dashboard_screen")
+    data object AdminEmployeeList : Screen("admin_employee_list_screen")
+    data object AdminAddEditEmployee : Screen("admin_add_edit_employee_screen")
+}
