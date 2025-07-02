@@ -77,7 +77,7 @@ fun GuestDetailsScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
-            onClick = { /* TODO: Call the backend */ onCheckInComplete() },
+            onClick = { viewModel.checkInGuests(onCheckInComplete) },
             enabled = uiState.isCheckInEnabled,
             modifier = Modifier
                 .fillMaxWidth(0.7f)

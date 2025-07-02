@@ -13,6 +13,7 @@ import com.exposystems.welcomewave.navigation.Screen
 import com.exposystems.welcomewave.ui.admin.AdminAddEditEmployeeScreen
 import com.exposystems.welcomewave.ui.admin.AdminEmployeeListScreen
 import com.exposystems.welcomewave.ui.adminlogin.AdminLoginScreen
+import com.exposystems.welcomewave.ui.confirmation.ConfirmationScreen
 import com.exposystems.welcomewave.ui.employeeselect.EmployeeSelectScreen
 import com.exposystems.welcomewave.ui.guestdetails.GuestDetailsScreen
 import com.exposystems.welcomewave.ui.theme.WelcomeWaveTheme
@@ -93,6 +94,33 @@ class MainActivity : ComponentActivity() {
                         AdminAddEditEmployeeScreen(
                             onNavigateUp = {
                                 navController.navigateUp()
+                            }
+                        )
+                    }
+
+                    composable(
+                        route = Screen.GuestDetails.route,
+                        arguments = listOf(navArgument("employeeId") { type = NavType.IntType })
+                    ) {
+                        GuestDetailsScreen(
+                            onCheckInComplete = {
+                                // Navigate to the new confirmation screen after check-in
+                                navController.navigate(Screen.Confirmation.route) {
+                                    // Clear the back stack up to the welcome screen
+                                    popUpTo(Screen.Welcome.route)
+                                }
+                            }
+                        )
+                    }
+
+                    // Add the new confirmation screen route
+                    composable(Screen.Confirmation.route) {
+                        ConfirmationScreen(
+                            onTimeout = {
+                                // After 5 seconds, go back to the welcome screen
+                                navController.navigate(Screen.Welcome.route) {
+                                    popUpTo(Screen.Welcome.route) { inclusive = true }
+                                }
                             }
                         )
                     }

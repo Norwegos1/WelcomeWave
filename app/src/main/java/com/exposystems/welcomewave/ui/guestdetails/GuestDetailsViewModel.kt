@@ -3,6 +3,7 @@ package com.exposystems.welcomewave.ui.guestdetails
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.exposystems.welcomewave.data.CheckInRequest
 import com.exposystems.welcomewave.data.Employee
 import com.exposystems.welcomewave.data.EmployeeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -13,7 +14,7 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
-// A data class to represent a single guest, with a unique ID for list management.
+// Guest and GuestDetailsUiState data classes remain the same...
 data class Guest(
     val id: UUID = UUID.randomUUID(),
     val name: String = ""
@@ -22,21 +23,20 @@ data class Guest(
 data class GuestDetailsUiState(
     val selectedEmployee: Employee? = null,
     val companyName: String = "",
-    val guests: List<Guest> = listOf(Guest()), // Start with one empty guest
+    val guests: List<Guest> = listOf(Guest()),
     val isCheckInEnabled: Boolean = false
 )
 
 @HiltViewModel
 class GuestDetailsViewModel @Inject constructor(
-    private val employeeRepository: EmployeeRepository,
-    savedStateHandle: SavedStateHandle // Used to get navigation arguments
+    private val employeeRepository: EmployeeRepository, // The repository is already injected
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GuestDetailsUiState())
     val uiState = _uiState.asStateFlow()
 
     init {
-        // Retrieve the employeeId passed through navigation
         val employeeId: Int? = savedStateHandle["employeeId"]
         if (employeeId != null && employeeId != -1) {
             loadEmployeeDetails(employeeId)
@@ -45,7 +45,6 @@ class GuestDetailsViewModel @Inject constructor(
 
     private fun loadEmployeeDetails(employeeId: Int) {
         viewModelScope.launch {
-            // Efficiently fetch only the selected employee from the database
             val employee = employeeRepository.getEmployee(employeeId)
             _uiState.update { it.copy(selectedEmployee = employee) }
         }
@@ -82,9 +81,32 @@ class GuestDetailsViewModel @Inject constructor(
         validateCheckIn()
     }
 
+    // This is the new function that calls the repository
+    fun checkInGuests(onCheckInComplete: () -> Unit) {
+        if (!uiState.value.isCheckInEnabled) return
+
+        viewModelScope.launch {
+            uiState.value.selectedEmployee?.let { employee ->
+                val request = CheckInRequest(
+                    employeeEmail = employee.email,
+                    visitorCompany = uiState.value.companyName,
+                    visitorNames = uiState.value.guests.map { it.name }
+                )
+
+                // Call the repository function
+                val success = employeeRepository.sendCheckInNotification(request)
+
+                if (success) {
+                    onCheckInComplete()
+                } else {
+                    // In a real app, you would show an error toast or dialog here
+                }
+            }
+        }
+    }
+
     private fun validateCheckIn() {
         val state = _uiState.value
-        // The check-in button is enabled only when all fields are valid
         val isReady = state.companyName.isNotBlank() &&
                 state.guests.all { it.name.isNotBlank() } &&
                 state.selectedEmployee != null

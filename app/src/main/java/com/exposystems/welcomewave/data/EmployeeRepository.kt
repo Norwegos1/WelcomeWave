@@ -6,11 +6,16 @@ import javax.inject.Singleton
 
 @Singleton
 class EmployeeRepository @Inject constructor(
-    private val employeeDao: EmployeeDao // Hilt needs to know how to provide this DAO
+    private val employeeDao: EmployeeDao,
+    private val notificationApiService: NotificationApiService
 ) {
 
     fun getEmployees(): Flow<List<Employee>> {
         return employeeDao.getAllEmployees()
+    }
+
+    suspend fun getEmployee(id: Int): Employee? {
+        return employeeDao.getEmployeeById(id)
     }
 
     suspend fun addEmployee(employee: Employee) {
@@ -21,7 +26,14 @@ class EmployeeRepository @Inject constructor(
         employeeDao.delete(employee)
     }
 
-    suspend fun getEmployee(id: Int): Employee? {
-        return employeeDao.getEmployeeById(id)
+    suspend fun sendCheckInNotification(request: CheckInRequest): Boolean {
+        return try {
+            // This line now uses the injected service
+            val response = notificationApiService.sendCheckInNotification(request)
+            response.isSuccessful
+        } catch (e: Exception) {
+            e.printStackTrace() // Log the error in a real app
+            false
+        }
     }
 }
