@@ -16,7 +16,6 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideNotificationApiService(): NotificationApiService {
-        // The base URL is the part before the function's specific name
         val baseUrl = "https://sendcheckinnotification-tmklzaes2q-uc.a.run.app/"
 
         return Retrofit.Builder()

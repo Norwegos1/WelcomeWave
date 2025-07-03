@@ -1,5 +1,6 @@
 package com.exposystems.welcomewave.ui.admin
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,7 +23,8 @@ import com.exposystems.welcomewave.data.Employee
 fun AdminEmployeeListScreen(
     viewModel: AdminEmployeeListViewModel = hiltViewModel(),
     onAddEmployeeClicked: () -> Unit,
-    onNavigateUp: () -> Unit // The missing parameter
+    onEditEmployeeClicked: (Int) -> Unit,
+    onNavigateUp: () -> Unit
 ) {
     val employees by viewModel.employees.collectAsState()
 
@@ -53,6 +55,7 @@ fun AdminEmployeeListScreen(
             items(employees, key = { it.id }) { employee ->
                 EmployeeManagementListItem(
                     employee = employee,
+                    onEdit = { onEditEmployeeClicked(employee.id) }, // Pass the ID here
                     onDelete = { viewModel.onDeleteEmployee(employee) }
                 )
             }
@@ -63,11 +66,15 @@ fun AdminEmployeeListScreen(
 @Composable
 private fun EmployeeManagementListItem(
     employee: Employee,
+    onEdit: () -> Unit, // New callback
     onDelete: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onEdit() } // Make the whole card clickable for editing
     ) {
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()

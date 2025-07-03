@@ -82,7 +82,12 @@ class MainActivity : ComponentActivity() {
                     composable(Screen.AdminEmployeeList.route) {
                         AdminEmployeeListScreen(
                             onAddEmployeeClicked = {
-                                navController.navigate(Screen.AdminAddEditEmployee.route)
+                                // Navigate with -1 to indicate a new employee
+                                navController.navigate(Screen.AdminAddEditEmployee.createRoute(-1))
+                            },
+                            onEditEmployeeClicked = { employeeId ->
+                                // Navigate with the actual ID for an existing employee
+                                navController.navigate(Screen.AdminAddEditEmployee.createRoute(employeeId))
                             },
                             onNavigateUp = {
                                 navController.navigateUp()
@@ -90,7 +95,10 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    composable(Screen.AdminAddEditEmployee.route) {
+                    composable(
+                        route = Screen.AdminAddEditEmployee.route, // Update this to accept an argument
+                        arguments = listOf(navArgument("employeeId") { type = NavType.IntType })
+                    ) {
                         AdminAddEditEmployeeScreen(
                             onNavigateUp = {
                                 navController.navigateUp()

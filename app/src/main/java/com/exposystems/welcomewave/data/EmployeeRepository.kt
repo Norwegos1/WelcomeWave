@@ -27,6 +27,10 @@ class EmployeeRepository @Inject constructor(
         employeeDao.delete(employee)
     }
 
+    suspend fun updateEmployee(employee: Employee) {
+        employeeDao.update(employee)
+    }
+
     suspend fun sendCheckInNotification(request: CheckInRequest): Boolean {
         return try {
             val response = notificationApiService.sendCheckInNotification(request)

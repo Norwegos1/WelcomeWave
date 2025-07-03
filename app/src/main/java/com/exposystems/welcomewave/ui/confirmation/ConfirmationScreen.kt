@@ -32,14 +32,15 @@ fun ConfirmationScreen(
         Icon(
             imageVector = Icons.Default.CheckCircle,
             contentDescription = "Success",
-            modifier = Modifier.size(100.dp),
-            tint = Color(0xFF00C853) // A nice green color
+            modifier = Modifier.size(120.dp),
+            tint = Color(0xFF00C853)
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text(
             "Thank You!",
             style = MaterialTheme.typography.displaySmall
         )
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             "The employee has been notified of your arrival.",
             style = MaterialTheme.typography.titleMedium
