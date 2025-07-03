@@ -17,7 +17,7 @@ object NetworkModule {
     @Singleton
     fun provideNotificationApiService(): NotificationApiService {
         // The base URL is the part before the function's specific name
-        val baseUrl = "https://us-central1-welcomewave-receptionist.cloudfunctions.net/"
+        val baseUrl = "https://sendcheckinnotification-tmklzaes2q-uc.a.run.app/"
 
         return Retrofit.Builder()
             .baseUrl(baseUrl)
