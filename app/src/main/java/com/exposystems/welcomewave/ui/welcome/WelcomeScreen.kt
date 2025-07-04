@@ -4,9 +4,12 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,7 +26,8 @@ import com.exposystems.welcomewave.R
 fun WelcomeScreen(
     viewModel: WelcomeViewModel = hiltViewModel(),
     onGuestNavigate: () -> Unit,
-    onAdminNavigate: () -> Unit
+    onAdminNavigate: () -> Unit,
+    onCheckOutNavigate: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -59,6 +63,11 @@ fun WelcomeScreen(
                 color = Color.White, // Use white text for better contrast on the video
                 textAlign = TextAlign.Center
             )
+            Spacer(modifier = Modifier.height(24.dp))
+            OutlinedButton(onClick = onCheckOutNavigate) {
+                Text("Visitor Check-out")
+            }
         }
+
     }
 }

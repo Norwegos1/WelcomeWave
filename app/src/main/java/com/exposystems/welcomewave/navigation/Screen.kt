@@ -3,6 +3,7 @@ package com.exposystems.welcomewave.navigation
 sealed class Screen(val route: String) {
     data object Welcome : Screen("welcome_screen")
     data object EmployeeSelect : Screen("employee_select_screen")
+    data object CheckOut : Screen("check_out_screen")
     data object GuestDetails : Screen("guest_details_screen/{employeeId}") {
         fun createRoute(employeeId: Int) = "guest_details_screen/$employeeId"
     }

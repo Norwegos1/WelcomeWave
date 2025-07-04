@@ -7,11 +7,13 @@ plugins {
 
 android {
     namespace = "com.exposystems.welcomewave"
+    //noinspection GradleDependency
     compileSdk = 34
 
     defaultConfig {
         applicationId = "com.exposystems.welcomewave"
         minSdk = 24
+        //noinspection OldTargetApi
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -61,9 +63,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.activity.ktx)
 
-    implementation("androidx.media3:media3-exoplayer:1.3.1")
-    implementation("androidx.media3:media3-ui:1.3.1")
-
+    // Video Player
+    implementation(libs.bundles.media3)
 
     // Hilt
     implementation(libs.hilt.android)

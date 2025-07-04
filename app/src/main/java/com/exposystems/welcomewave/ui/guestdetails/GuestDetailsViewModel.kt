@@ -93,13 +93,14 @@ class GuestDetailsViewModel @Inject constructor(
                     visitorNames = uiState.value.guests.map { it.name }
                 )
 
-                // Call the repository function
                 val success = employeeRepository.sendCheckInNotification(request)
 
                 if (success) {
+                    // Log the check-in to the database
+                    employeeRepository.logCheckIn(request, employee.id)
                     onCheckInComplete()
                 } else {
-                    // In a real app, you would show an error toast or dialog here
+                    // TODO: Handle error
                 }
             }
         }
@@ -112,4 +113,6 @@ class GuestDetailsViewModel @Inject constructor(
                 state.selectedEmployee != null
         _uiState.update { it.copy(isCheckInEnabled = isReady) }
     }
+
+
 }

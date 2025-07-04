@@ -16,6 +16,7 @@ import com.exposystems.welcomewave.ui.adminlogin.AdminLoginScreen
 import com.exposystems.welcomewave.ui.confirmation.ConfirmationScreen
 import com.exposystems.welcomewave.ui.employeeselect.EmployeeSelectScreen
 import com.exposystems.welcomewave.ui.guestdetails.GuestDetailsScreen
+import com.exposystems.welcomewave.ui.checkout.CheckOutScreen
 import com.exposystems.welcomewave.ui.theme.WelcomeWaveTheme
 import com.exposystems.welcomewave.ui.welcome.WelcomeScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -39,6 +40,9 @@ class MainActivity : ComponentActivity() {
                             },
                             onAdminNavigate = {
                                 navController.navigate(Screen.AdminLogin.route)
+                            },
+                            onCheckOutNavigate = {
+                                navController.navigate(Screen.CheckOut.route)
                             }
                         )
                     }
@@ -131,6 +135,10 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         )
+                    }
+
+                    composable(Screen.CheckOut.route) {
+                        CheckOutScreen(onNavigateUp = { navController.navigateUp() })
                     }
                 }
             }

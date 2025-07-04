@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.exposystems.welcomewave.data.AppDatabase
+import com.exposystems.welcomewave.data.CheckInLogDao
 import com.exposystems.welcomewave.data.Employee
 import com.exposystems.welcomewave.data.EmployeeDao
 import dagger.Module
@@ -54,4 +55,10 @@ object DatabaseModule {
     fun provideEmployeeDao(database: AppDatabase): EmployeeDao {
         return database.employeeDao()
     }
+
+    @Provides
+    fun provideCheckInLogDao(database: AppDatabase): CheckInLogDao {
+        return database.checkInLogDao()
+    }
 }
+
