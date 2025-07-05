@@ -91,18 +91,26 @@ class AdminAddEditViewModel @Inject constructor(
         if (uiState.name.isBlank() || uiState.title.isBlank()) return
 
         viewModelScope.launch {
-            val employee = Employee(
-                id = existingEmployeeId ?: 0,
-                name = uiState.name.trim(),
-                title = uiState.title.trim(),
-                email = uiState.email.trim(),
-                photoUri = uiState.photoUri
-            )
-
             if (existingEmployeeId == null || existingEmployeeId == -1) {
-                repository.addEmployee(employee)
+                // Logic for a NEW employee
+                val newEmployee = Employee(
+                    // When creating, the ID is the default 0, so Room auto-generates it
+                    name = uiState.name.trim(),
+                    title = uiState.title.trim(),
+                    email = uiState.email.trim(),
+                    photoUri = uiState.photoUri
+                )
+                repository.addEmployee(newEmployee)
             } else {
-                repository.updateEmployee(employee)
+                // Logic for an EXISTING employee
+                val updatedEmployee = Employee(
+                    id = existingEmployeeId!!, // Use the real ID when updating
+                    name = uiState.name.trim(),
+                    title = uiState.title.trim(),
+                    email = uiState.email.trim(),
+                    photoUri = uiState.photoUri
+                )
+                repository.updateEmployee(updatedEmployee)
             }
         }
     }

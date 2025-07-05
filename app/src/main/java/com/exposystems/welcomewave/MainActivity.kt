@@ -1,6 +1,7 @@
 package com.exposystems.welcomewave
 
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -9,6 +10,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import android.graphics.Color
+import androidx.activity.SystemBarStyle
 import com.exposystems.welcomewave.navigation.Screen
 import com.exposystems.welcomewave.ui.admin.AdminAddEditEmployeeScreen
 import com.exposystems.welcomewave.ui.admin.AdminEmployeeListScreen
@@ -25,7 +28,19 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.auto(
+                Color.TRANSPARENT,
+                Color.TRANSPARENT,
+            ),
+            navigationBarStyle = SystemBarStyle.auto(
+                Color.TRANSPARENT,
+                Color.TRANSPARENT,
+            )
+        )
+
         setContent {
             WelcomeWaveTheme {
                 val navController = rememberNavController()
@@ -51,19 +66,6 @@ class MainActivity : ComponentActivity() {
                         EmployeeSelectScreen(
                             onEmployeeSelected = { employeeId ->
                                 navController.navigate(Screen.GuestDetails.createRoute(employeeId))
-                            }
-                        )
-                    }
-
-                    composable(
-                        route = Screen.GuestDetails.route,
-                        arguments = listOf(navArgument("employeeId") { type = NavType.IntType })
-                    ) {
-                        GuestDetailsScreen(
-                            onCheckInComplete = {
-                                navController.navigate(Screen.Welcome.route) {
-                                    popUpTo(Screen.Welcome.route) { inclusive = true }
-                                }
                             }
                         )
                     }
