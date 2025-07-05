@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -24,6 +25,7 @@ fun AdminEmployeeListScreen(
     viewModel: AdminEmployeeListViewModel = hiltViewModel(),
     onAddEmployeeClicked: () -> Unit,
     onEditEmployeeClicked: (Int) -> Unit,
+    onViewLogClicked: () -> Unit,
     onNavigateUp: () -> Unit
 ) {
     val employees by viewModel.employees.collectAsState()
@@ -32,9 +34,17 @@ fun AdminEmployeeListScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Manage Employees") },
-                navigationIcon = { // Add the navigation icon to use the callback
+                navigationIcon = {
                     IconButton(onClick = onNavigateUp) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onViewLogClicked) {
+                        Icon(
+                            imageVector = Icons.Filled.History,
+                            contentDescription = "View Visitor Log"
+                        )
                     }
                 }
             )
@@ -55,7 +65,7 @@ fun AdminEmployeeListScreen(
             items(employees, key = { it.id }) { employee ->
                 EmployeeManagementListItem(
                     employee = employee,
-                    onEdit = { onEditEmployeeClicked(employee.id) }, // Pass the ID here
+                    onEdit = { onEditEmployeeClicked(employee.id) },
                     onDelete = { viewModel.onDeleteEmployee(employee) }
                 )
             }
@@ -72,7 +82,7 @@ private fun EmployeeManagementListItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onEdit() } // Make the whole card clickable for editing
+            .clickable { onEdit() }
     ) {
 
         Row(

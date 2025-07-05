@@ -15,4 +15,8 @@ interface CheckInLogDao {
 
     @Query("UPDATE check_in_logs SET checkOutTime = :time WHERE id = :id")
     suspend fun setCheckOutTime(id: Int, time: Long)
+
+    // In CheckInLogDao.kt
+    @Query("SELECT * FROM check_in_logs ORDER BY checkInTime DESC")
+    fun getAllLogs(): Flow<List<CheckInLog>>
 }

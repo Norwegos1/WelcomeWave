@@ -1,6 +1,6 @@
 package com.exposystems.welcomewave.ui.welcome
 
-import androidx.annotation.OptIn
+import android.view.SurfaceView
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
@@ -10,11 +10,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.PlayerView
 
-@OptIn(UnstableApi::class)
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun VideoPlayer(
     videoResourceId: Int,
@@ -41,15 +39,8 @@ fun VideoPlayer(
 
     AndroidView(
         factory = {
-            PlayerView(it).apply {
-                player = exoPlayer
-                useController = false
-                // This new line tells the player to zoom and crop to fill the screen
-                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                layoutParams = android.widget.FrameLayout.LayoutParams(
-                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                    android.view.ViewGroup.LayoutParams.MATCH_PARENT
-                )
+            SurfaceView(it).apply {
+                exoPlayer.setVideoSurfaceView(this)
             }
         },
         modifier = modifier

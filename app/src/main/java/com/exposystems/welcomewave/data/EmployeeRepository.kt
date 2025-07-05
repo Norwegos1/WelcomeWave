@@ -65,4 +65,8 @@ class EmployeeRepository @Inject constructor(
     suspend fun logCheckOut(log: CheckInLog) {
         checkInLogDao.setCheckOutTime(log.id, System.currentTimeMillis())
     }
+
+    fun getVisitorLogs(): Flow<List<CheckInLog>> {
+        return checkInLogDao.getAllLogs()
+    }
 }
