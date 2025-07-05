@@ -1,6 +1,5 @@
 package com.exposystems.welcomewave.ui.employeeselect
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,14 +33,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.exposystems.welcomewave.R
 import com.exposystems.welcomewave.data.Employee
+import java.io.File
 
 @Composable
 fun EmployeeSelectScreen(
@@ -71,8 +69,8 @@ fun EmployeeSelectScreen(
             onValueChange = viewModel::onSearchQueryChange,
             label = { Text("Search by name") },
             modifier = Modifier.fillMaxWidth(0.8f),
+            shape = CircleShape,
             singleLine = true,
-            // Add the new trailing icon
             trailingIcon = {
                 if (uiState.searchQuery.isNotEmpty()) {
                     IconButton(onClick = { viewModel.onClearSearch() }) {
@@ -100,11 +98,9 @@ fun EmployeeSelectScreen(
             }
         } else {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .animateContentSize(), // Adds a nice animation when the list appears/disappears
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(vertical = 8.dp),
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(vertical = 8.dp, horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 items(filteredEmployees, key = { it.id }) { employee ->
@@ -131,23 +127,30 @@ fun EmployeeListItem(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(16.dp), // Increased padding for more space
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
-                model = employee.photoUri?.toUri(),
+                model = employee.photoUri?.let { File(it) },
                 contentDescription = "${employee.name} photo",
                 placeholder = painterResource(id = R.drawable.avatar_placeholder),
                 error = painterResource(id = R.drawable.avatar_placeholder),
                 modifier = Modifier
-                    .size(60.dp)
+                    .size(100.dp)
                     .clip(CircleShape),
                 contentScale = ContentScale.Crop
             )
             Spacer(Modifier.width(16.dp))
             Column {
-                Text(employee.name, fontWeight = FontWeight.Bold)
-                Text(employee.title, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = employee.name,
+                    style = MaterialTheme.typography.headlineLarge
+                )
+                Text(
+                    text = employee.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
             }
         }
     }

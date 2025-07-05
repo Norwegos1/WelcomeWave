@@ -117,11 +117,13 @@ class MainActivity : ComponentActivity() {
                     ) {
                         GuestDetailsScreen(
                             onCheckInComplete = {
-                                // Navigate to the new confirmation screen after check-in
                                 navController.navigate(Screen.Confirmation.route) {
-                                    // Clear the back stack up to the welcome screen
                                     popUpTo(Screen.Welcome.route)
                                 }
+                            },
+                            // Add the new callback to handle back navigation
+                            onNavigateUp = {
+                                navController.navigateUp()
                             }
                         )
                     }
