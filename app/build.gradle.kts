@@ -67,6 +67,7 @@ dependencies {
     // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore.ktx)
+    implementation(libs.firebase.auth.ktx)
 
     // Video Player
     implementation(libs.bundles.media3)
