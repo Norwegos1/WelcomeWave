@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.exposystems.welcomewave.data.CheckInRequest
 import com.exposystems.welcomewave.data.Employee
-import com.exposystems.welcomewave.data.EmployeeRepository
+import com.exposystems.welcomewave.data.repository.EmployeeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
