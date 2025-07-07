@@ -8,7 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.exposystems.welcomewave.data.Employee
+import com.exposystems.welcomewave.data.model.Employee // Ensure this imports your NEW Employee data class
 import com.exposystems.welcomewave.data.repository.EmployeeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -18,48 +18,55 @@ import java.util.UUID
 import javax.inject.Inject
 
 data class AddEditUiState(
-    val name: String = "",
+    val firstName: String = "", // Changed from 'name'
+    val lastName: String = "",  // Added
     val title: String = "",
     val email: String = "",
-    val photoUri: String? = null
+    val photoUrl: String? = null // Changed from photoUri
 )
 
 @HiltViewModel
 class AdminAddEditViewModel @Inject constructor(
-    private val repository: EmployeeRepository,
-    savedStateHandle: SavedStateHandle, // "private val" removed
+    private val employeeRepository: EmployeeRepository, // Renamed 'repository' for clarity
+    savedStateHandle: SavedStateHandle,
     @ApplicationContext private val application: Context
 ) : ViewModel() {
 
     var uiState by mutableStateOf(AddEditUiState())
         private set
 
-    private var existingEmployeeId: Int? = null
+    // Changed from Int? to String? for Firestore IDs
+    private var existingEmployeeId: String? = null
 
     init {
         // We get the employeeId from the handle here...
+        // Retrieve as String, not Int
         existingEmployeeId = savedStateHandle["employeeId"]
-        if (existingEmployeeId != null && existingEmployeeId != -1) {
+        if (existingEmployeeId != null && existingEmployeeId != "-1") { // Check against string for placeholder
             loadEmployee(existingEmployeeId!!)
         }
     }
-    // ...and since we don't use savedStateHandle anywhere else, it doesn't need to be a property.
 
-    private fun loadEmployee(id: Int) {
+    private fun loadEmployee(id: String) { // Changed ID type to String
         viewModelScope.launch {
-            repository.getEmployee(id)?.let { employee ->
+            employeeRepository.getEmployeeById(id)?.let { employee -> // Changed to getEmployeeById
                 uiState = uiState.copy(
-                    name = employee.name,
-                    title = employee.title,
+                    firstName = employee.firstName, // Use new fields
+                    lastName = employee.lastName,   // Use new fields
+                    title = employee.title ?: "",   // Handle nullable title
                     email = employee.email,
-                    photoUri = employee.photoUri
+                    photoUrl = employee.photoUrl    // Use new field
                 )
             }
         }
     }
 
-    fun onNameChange(name: String) {
-        uiState = uiState.copy(name = name)
+    fun onFirstNameChange(name: String) { // Renamed from onNameChange
+        uiState = uiState.copy(firstName = name)
+    }
+
+    fun onLastNameChange(name: String) { // Added for lastName
+        uiState = uiState.copy(lastName = name)
     }
 
     fun onTitleChange(title: String) {
@@ -83,34 +90,40 @@ class AdminAddEditViewModel @Inject constructor(
                     input.copyTo(output)
                 }
             }
-            uiState = uiState.copy(photoUri = file.absolutePath)
+            // Store local file path for now; upload to Firebase Storage later
+            uiState = uiState.copy(photoUrl = file.absolutePath)
         }
     }
 
     fun saveEmployee() {
-        if (uiState.name.isBlank() || uiState.title.isBlank()) return
+        // Validate required fields (using firstName for name validation)
+        if (uiState.firstName.isBlank() || uiState.lastName.isBlank() || uiState.email.isBlank()) return
 
         viewModelScope.launch {
-            if (existingEmployeeId == null || existingEmployeeId == -1) {
+            if (existingEmployeeId == null || existingEmployeeId == "-1") { // Check against string for placeholder
                 // Logic for a NEW employee
                 val newEmployee = Employee(
-                    // When creating, the ID is the default 0, so Room auto-generates it
-                    name = uiState.name.trim(),
-                    title = uiState.title.trim(),
+                    // Firestore will auto-generate 'id' if left as default empty string
+                    firstName = uiState.firstName.trim(),
+                    lastName = uiState.lastName.trim(),
                     email = uiState.email.trim(),
-                    photoUri = uiState.photoUri
+                    title = uiState.title.trim().takeIf { it.isNotBlank() }, // Ensure empty string becomes null
+                    photoUrl = uiState.photoUrl
+                    // createdAt and updatedAt will be set by @ServerTimestamp
                 )
-                repository.addEmployee(newEmployee)
+                employeeRepository.addEmployee(newEmployee)
             } else {
                 // Logic for an EXISTING employee
                 val updatedEmployee = Employee(
-                    id = existingEmployeeId!!, // Use the real ID when updating
-                    name = uiState.name.trim(),
-                    title = uiState.title.trim(),
+                    id = existingEmployeeId!!, // Use the existing Firestore String ID
+                    firstName = uiState.firstName.trim(),
+                    lastName = uiState.lastName.trim(),
                     email = uiState.email.trim(),
-                    photoUri = uiState.photoUri
+                    title = uiState.title.trim().takeIf { it.isNotBlank() }, // Ensure empty string becomes null
+                    photoUrl = uiState.photoUrl
+                    // updatedAt will be set by @ServerTimestamp
                 )
-                repository.updateEmployee(updatedEmployee)
+                employeeRepository.updateEmployee(updatedEmployee)
             }
         }
     }

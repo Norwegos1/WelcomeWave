@@ -1,24 +1,26 @@
 package com.exposystems.welcomewave.data.repository
 
 import android.util.Log
-import com.exposystems.welcomewave.data.CheckInRequest // Assuming this is still your data class for the API call
-import com.exposystems.welcomewave.data.NotificationApiService // Keep this dependency
-import com.exposystems.welcomewave.data.model.VisitorLog // Import your NEW VisitorLog data class
+import com.exposystems.welcomewave.data.CheckInRequest
+import com.exposystems.welcomewave.data.NotificationApiService
+import com.exposystems.welcomewave.data.model.VisitorLog
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import java.util.Date // For Timestamp conversion if needed, though ServerTimestamp handles it
+import java.util.Date
 
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class VisitorLogRepository @Inject constructor(
+    @Suppress("PrivatePropertyName")
     private val firestore: FirebaseFirestore,
-    private val notificationApiService: NotificationApiService // Inject NotificationApiService here
+    @Suppress("UnusedPrivateProperty")
+    private val notificationApiService: NotificationApiService
 ) {
     // Reference to the "visitorLogs" collection in Firestore
     private val visitorLogsCollection = firestore.collection("visitorLogs")
@@ -79,17 +81,15 @@ class VisitorLogRepository @Inject constructor(
     ): Boolean {
         return try {
             val visitorLog = VisitorLog(
-                visitorName = checkInRequest.visitorNames.joinToString(", "), // Join names if multiple
+                visitorName = checkInRequest.visitorNames.joinToString(", "),
                 companyName = checkInRequest.visitorCompany,
                 employeeVisitedId = employeeFirestoreId,
                 employeeVisitedName = employeeName,
-                // checkInTime will be set by @ServerTimestamp
                 hasCheckedOut = false
             )
             visitorLogsCollection.add(visitorLog).await()
 
-            // Send notification after successful log
-            sendCheckInNotification(checkInRequest) // Use the existing notification service
+            sendCheckInNotification(checkInRequest)
             true
         } catch (e: Exception) {
             Log.e("VisitorLogRepository", "Error logging check-in: ${e.message}", e)
@@ -104,10 +104,9 @@ class VisitorLogRepository @Inject constructor(
      */
     suspend fun logCheckOut(visitorLogId: String): Boolean {
         return try {
-            // Update only specific fields (checkOutTime and hasCheckedOut)
             visitorLogsCollection.document(visitorLogId).update(
                 mapOf(
-                    "checkOutTime" to Date(), // Set current date as check-out time
+                    "checkOutTime" to Date(),
                     "hasCheckedOut" to true
                 )
             ).await()
@@ -118,7 +117,8 @@ class VisitorLogRepository @Inject constructor(
         }
     }
 
-    // You might also need a way to get a specific visitor log by ID if the UI requires it for detailed view or check-out by ID
+    // Suppress "unused" warning for this function as it's a utility that might be used later
+    @Suppress("unused")
     suspend fun getVisitorLogById(logId: String): VisitorLog? {
         return try {
             visitorLogsCollection.document(logId).get().await().toObject(VisitorLog::class.java)
@@ -128,7 +128,6 @@ class VisitorLogRepository @Inject constructor(
         }
     }
 
-    // This private function wraps your existing notification service call
     private suspend fun sendCheckInNotification(request: CheckInRequest): Boolean {
         return try {
             val response = notificationApiService.sendCheckInNotification(request)

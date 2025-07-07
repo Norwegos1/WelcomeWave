@@ -1,7 +1,13 @@
 package com.exposystems.welcomewave.ui.admin
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -9,7 +15,15 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -17,14 +31,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.exposystems.welcomewave.data.Employee
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminEmployeeListScreen(
     viewModel: AdminEmployeeListViewModel = hiltViewModel(),
     onAddEmployeeClicked: () -> Unit,
-    onEditEmployeeClicked: (Int) -> Unit,
+    onEditEmployeeClicked: (String) -> Unit, // CHANGED: Parameter type from Int to String
     onViewLogClicked: () -> Unit,
     onNavigateUp: () -> Unit
 ) {
@@ -62,10 +75,11 @@ fun AdminEmployeeListScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            // It.id is now String, which is fine for the key parameter
             items(employees, key = { it.id }) { employee ->
                 EmployeeManagementListItem(
                     employee = employee,
-                    onEdit = { onEditEmployeeClicked(employee.id) },
+                    onEdit = { onEditEmployeeClicked(employee.id) }, // CHANGED: Pass employee.id (String)
                     onDelete = { viewModel.onDeleteEmployee(employee) }
                 )
             }
@@ -75,8 +89,8 @@ fun AdminEmployeeListScreen(
 
 @Composable
 private fun EmployeeManagementListItem(
-    employee: Employee,
-    onEdit: () -> Unit, // New callback
+    employee: com.exposystems.welcomewave.data.model.Employee, // CHANGED: Ensure correct Employee model
+    onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
@@ -84,7 +98,6 @@ private fun EmployeeManagementListItem(
             .fillMaxWidth()
             .clickable { onEdit() }
     ) {
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -93,8 +106,10 @@ private fun EmployeeManagementListItem(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                Text(text = employee.name, style = MaterialTheme.typography.titleMedium)
-                Text(text = employee.title, style = MaterialTheme.typography.bodyMedium)
+                // CHANGED: Display first and last name
+                Text(text = "${employee.firstName} ${employee.lastName}", style = MaterialTheme.typography.titleMedium)
+                // CHANGED: Handle nullable title
+                Text(text = employee.title ?: "", style = MaterialTheme.typography.bodyMedium)
             }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, contentDescription = "Delete Employee")

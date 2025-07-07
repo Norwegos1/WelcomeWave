@@ -33,11 +33,10 @@ fun GuestDetailsScreen(
 
     Scaffold(
         topBar = {
-            // Use CenterAlignedTopAppBar instead of TopAppBar
             CenterAlignedTopAppBar(
                 title = {
-                    uiState.selectedEmployee?.let {
-                        Text("Check-in for ${it.name}")
+                    uiState.selectedEmployee?.let { employee ->
+                        Text("Check-in for ${employee.firstName} ${employee.lastName}")
                     }
                 },
                 navigationIcon = {
@@ -51,63 +50,70 @@ fun GuestDetailsScreen(
             )
         }
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .imePadding()
-                .padding(horizontal = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            item {
-                Spacer(modifier = Modifier.height(32.dp))
-                OutlinedTextField(
-                    value = uiState.companyName,
-                    onValueChange = viewModel::onCompanyChange,
-                    label = { Text("Your Company Name") },
-                    modifier = Modifier.fillMaxWidth(0.8f),
-                    singleLine = true,
-                    textStyle = MaterialTheme.typography.titleLarge,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Please enter guest names below:", style = MaterialTheme.typography.titleMedium)
+        // Added check for loading state
+        if (uiState.isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
-
-            items(uiState.guests, key = { it.id }) { guest ->
-                GuestInputItem(
-                    guest = guest,
-                    onNameChange = { newName ->
-                        viewModel.onGuestNameChange(guest.id, newName)
-                    },
-                    onRemove = { viewModel.onRemoveGuest(guest.id) },
-                    canBeRemoved = uiState.guests.size > 1
-                )
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = { viewModel.onAddGuest() },
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .height(56.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Guest")
-                    Spacer(Modifier.width(8.dp))
-                    Text("Add Another Guest", style = MaterialTheme.typography.titleMedium)
+        } else { // WHEN YOU ARE IN THIS 'ELSE' BLOCK, uiState.isLoading IS GUARANTEED TO BE FALSE
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .imePadding()
+                    .padding(horizontal = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                item {
+                    Spacer(modifier = Modifier.height(32.dp))
+                    OutlinedTextField(
+                        value = uiState.companyName,
+                        onValueChange = viewModel::onCompanyChange,
+                        label = { Text("Your Company Name") },
+                        modifier = Modifier.fillMaxWidth(0.8f),
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.titleLarge,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Please enter guest names below:", style = MaterialTheme.typography.titleMedium)
                 }
-                Spacer(modifier = Modifier.height(24.dp))
-                Button(
-                    onClick = { viewModel.checkInGuests(onCheckInComplete) },
-                    enabled = uiState.isCheckInEnabled,
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .height(64.dp)
-                ) {
-                    Text("Complete Check-In", style = MaterialTheme.typography.titleLarge)
+
+                items(uiState.guests, key = { it.id }) { guest ->
+                    GuestInputItem(
+                        guest = guest,
+                        onNameChange = { newName ->
+                            viewModel.onGuestNameChange(guest.id, newName)
+                        },
+                        onRemove = { viewModel.onRemoveGuest(guest.id) },
+                        canBeRemoved = uiState.guests.size > 1
+                    )
                 }
-                Spacer(modifier = Modifier.height(32.dp))
+
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { viewModel.onAddGuest() },
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .height(56.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Guest")
+                        Spacer(Modifier.width(8.dp))
+                        Text("Add Another Guest", style = MaterialTheme.typography.titleMedium)
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(
+                        onClick = { viewModel.checkInGuests(onCheckInComplete) },
+                        enabled = uiState.isCheckInEnabled, // CHANGED: Removed '&& !uiState.isLoading'
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .height(64.dp)
+                    ) {
+                        Text("Complete Check-In", style = MaterialTheme.typography.titleLarge)
+                    }
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
             }
         }
     }
@@ -115,7 +121,7 @@ fun GuestDetailsScreen(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun GuestInputItem( // <-- This is the missing function
+private fun GuestInputItem(
     guest: Guest,
     onNameChange: (String) -> Unit,
     onRemove: () -> Unit,

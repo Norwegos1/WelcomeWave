@@ -32,9 +32,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.exposystems.welcomewave.data.CheckInLog
+import com.exposystems.welcomewave.data.model.VisitorLog
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -72,10 +71,12 @@ fun CheckOutScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // log is now type VisitorLog
                 items(uiState.checkedInVisitors, key = { it.id }) { log ->
                     VisitorLogItem(
                         log = log,
-                        employeeName = uiState.employees[log.employeeId] ?: "Unknown",
+                        // CHANGED: Use log.employeeVisitedId for lookup (String ID)
+                        employeeName = uiState.employees[log.employeeVisitedId] ?: "Unknown",
                         onCheckOut = { viewModel.onCheckOut(log) }
                     )
                 }
@@ -86,7 +87,7 @@ fun CheckOutScreen(
 
 @Composable
 private fun VisitorLogItem(
-    log: CheckInLog,
+    log: VisitorLog, // CHANGED: log is VisitorLog
     employeeName: String,
     onCheckOut: () -> Unit
 ) {
@@ -100,14 +101,17 @@ private fun VisitorLogItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = log.visitorNames, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    text = "from ${log.visitorCompany}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Text(text = log.visitorName, style = MaterialTheme.typography.titleMedium) // CHANGED: visitorNames to visitorName
+                log.companyName?.let {
+                    Text(
+                        text = "from $it",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "Visited: $employeeName at ${dateFormat.format(Date(log.checkInTime))}",
+                    // CHANGED: checkInTime is now Date? directly
+                    text = "Visited: $employeeName at ${log.checkInTime?.let { dateFormat.format(it) } ?: "N/A"}",
                     style = MaterialTheme.typography.bodySmall
                 )
             }

@@ -35,22 +35,23 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.exposystems.welcomewave.R
-import com.exposystems.welcomewave.data.Employee
 import java.io.File
 
 @Composable
 fun EmployeeSelectScreen(
     viewModel: EmployeeSelectViewModel = hiltViewModel(),
-    onEmployeeSelected: (Int) -> Unit
+    onEmployeeSelected: (String) -> Unit // CHANGED: Parameter type from Int to String
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    val filteredEmployees = uiState.allEmployees.filter {
-        it.name.contains(uiState.searchQuery, ignoreCase = true)
-    }
+    // Filtered employees logic is now handled in the ViewModel's combine
+    // So, we use uiState.allEmployees directly and search logic is implicitly applied
+    // based on how uiState.allEmployees is set up in the ViewModel.
+    val employeesToDisplay = uiState.allEmployees // This will already be filtered by the ViewModel's combine logic
 
     Column(
         modifier = Modifier
@@ -85,7 +86,7 @@ fun EmployeeSelectScreen(
         Spacer(Modifier.height(16.dp))
 
         // Check if the list is empty and show a message
-        if (filteredEmployees.isEmpty() && uiState.allEmployees.isNotEmpty()) {
+        if (employeesToDisplay.isEmpty() && uiState.searchQuery.isNotEmpty()) { // If search query, and no results
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -96,17 +97,29 @@ fun EmployeeSelectScreen(
                     textAlign = TextAlign.Center
                 )
             }
-        } else {
+        } else if (employeesToDisplay.isEmpty() && uiState.searchQuery.isBlank()){ // If no search and no employees
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "No employees added yet.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+        else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = 8.dp, horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                items(filteredEmployees, key = { it.id }) { employee ->
+                items(employeesToDisplay, key = { it.id }) { employee -> // employee.id is String
                     EmployeeListItem(
                         employee = employee,
-                        onSelected = { onEmployeeSelected(employee.id) }
+                        onSelected = { onEmployeeSelected(employee.id) } // CHANGED: Pass employee.id (String)
                     )
                 }
             }
@@ -114,10 +127,9 @@ fun EmployeeSelectScreen(
     }
 }
 
-// The EmployeeListItem function remains the same as before
 @Composable
 fun EmployeeListItem(
-    employee: Employee,
+    employee: com.exposystems.welcomewave.data.model.Employee, // CHANGED: Ensure correct Employee model
     onSelected: () -> Unit
 ) {
     Card(
@@ -127,12 +139,19 @@ fun EmployeeListItem(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(
-            modifier = Modifier.padding(16.dp), // Increased padding for more space
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
-                model = employee.photoUri?.let { File(it) },
-                contentDescription = "${employee.name} photo",
+                // Updated to use employee.photoUrl and handle local file paths if necessary
+                model = employee.photoUrl?.let { path ->
+                    if (path.startsWith("content://") || path.startsWith("http")) {
+                        path
+                    } else {
+                        File(path).toUri() // Convert local file path to Uri for Coil
+                    }
+                },
+                contentDescription = "${employee.firstName} ${employee.lastName} photo", // CHANGED: Use first/last name
                 placeholder = painterResource(id = R.drawable.avatar_placeholder),
                 error = painterResource(id = R.drawable.avatar_placeholder),
                 modifier = Modifier
@@ -143,11 +162,13 @@ fun EmployeeListItem(
             Spacer(Modifier.width(16.dp))
             Column {
                 Text(
-                    text = employee.name,
+                    // CHANGED: Use firstName and lastName
+                    text = "${employee.firstName} ${employee.lastName}",
                     style = MaterialTheme.typography.headlineLarge
                 )
                 Text(
-                    text = employee.title,
+                    // CHANGED: Handle nullable title
+                    text = employee.title ?: "",
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
