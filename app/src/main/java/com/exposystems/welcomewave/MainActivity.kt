@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
 
                     composable(Screen.EmployeeSelect.route) {
                         EmployeeSelectScreen(
-                            onEmployeeSelected = { employeeId ->
+                            onEmployeeSelected = { employeeId -> // employeeId is now String
                                 navController.navigate(Screen.GuestDetails.createRoute(employeeId))
                             }
                         )
@@ -72,7 +72,6 @@ class MainActivity : ComponentActivity() {
                     composable(Screen.AdminLogin.route) {
                         AdminLoginScreen(
                             onLoginSuccess = {
-                                // Change this to navigate to the correct route
                                 navController.navigate(Screen.AdminEmployeeList.route) {
                                     popUpTo(Screen.AdminLogin.route) { inclusive = true }
                                 }
@@ -85,13 +84,15 @@ class MainActivity : ComponentActivity() {
 
                     composable(Screen.AdminEmployeeList.route) {
                         AdminEmployeeListScreen(
+                            // Pass "-1" as a String for new employee
                             onAddEmployeeClicked = {
-                                navController.navigate(Screen.AdminAddEditEmployee.createRoute(-1))
+                                navController.navigate(Screen.AdminAddEditEmployee.createRoute("-1"))
                             },
+                            // employeeId here is already String from AdminEmployeeListScreen
                             onEditEmployeeClicked = { employeeId ->
                                 navController.navigate(Screen.AdminAddEditEmployee.createRoute(employeeId))
                             },
-                            onViewLogClicked = { // Add this action
+                            onViewLogClicked = {
                                 navController.navigate(Screen.AdminVisitorLog.route)
                             },
                             onNavigateUp = {
@@ -101,8 +102,9 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable(
-                        route = Screen.AdminAddEditEmployee.route, // Update this to accept an argument
-                        arguments = listOf(navArgument("employeeId") { type = NavType.IntType })
+                        route = Screen.AdminAddEditEmployee.route,
+                        // CHANGED: NavType.IntType to NavType.StringType (Line 89 in previous paste)
+                        arguments = listOf(navArgument("employeeId") { type = NavType.StringType })
                     ) {
                         AdminAddEditEmployeeScreen(
                             onNavigateUp = {
@@ -113,7 +115,8 @@ class MainActivity : ComponentActivity() {
 
                     composable(
                         route = Screen.GuestDetails.route,
-                        arguments = listOf(navArgument("employeeId") { type = NavType.IntType })
+                        // CHANGED: NavType.IntType to NavType.StringType (Line 93 in previous paste)
+                        arguments = listOf(navArgument("employeeId") { type = NavType.StringType })
                     ) {
                         GuestDetailsScreen(
                             onCheckInComplete = {
@@ -121,18 +124,15 @@ class MainActivity : ComponentActivity() {
                                     popUpTo(Screen.Welcome.route)
                                 }
                             },
-                            // Add the new callback to handle back navigation
                             onNavigateUp = {
                                 navController.navigateUp()
                             }
                         )
                     }
 
-                    // Add the new confirmation screen route
                     composable(Screen.Confirmation.route) {
                         ConfirmationScreen(
                             onTimeout = {
-                                // After 5 seconds, go back to the welcome screen
                                 navController.navigate(Screen.Welcome.route) {
                                     popUpTo(Screen.Welcome.route) { inclusive = true }
                                 }

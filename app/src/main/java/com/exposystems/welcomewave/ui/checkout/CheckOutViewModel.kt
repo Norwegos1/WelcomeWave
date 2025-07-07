@@ -2,8 +2,9 @@ package com.exposystems.welcomewave.ui.checkout
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.exposystems.welcomewave.data.CheckInLog
+import com.exposystems.welcomewave.data.model.VisitorLog
 import com.exposystems.welcomewave.data.repository.EmployeeRepository
+import com.exposystems.welcomewave.data.repository.VisitorLogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -12,31 +13,35 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class CheckOutUiState(
-    val checkedInVisitors: List<CheckInLog> = emptyList(),
-    val employees: Map<Int, String> = emptyMap() // Map of Employee ID to Name
+    val checkedInVisitors: List<VisitorLog> = emptyList(),
+    val employees: Map<String, String> = emptyMap()
 )
 
 @HiltViewModel
 class CheckOutViewModel @Inject constructor(
-    private val repository: EmployeeRepository
+    @Suppress("UnusedPrivateProperty")
+    private val employeeRepository: EmployeeRepository,
+    private val visitorLogRepository: VisitorLogRepository
 ) : ViewModel() {
 
-    // Combine the flow of checked-in visitors and the flow of all employees
+    // Combine the flow of checked-in visitors (from VisitorLogRepository)
+    // and the flow of all employees (from EmployeeRepository)
     val uiState = combine(
-        repository.getCheckedInVisitors(),
-        repository.getEmployees()
+        visitorLogRepository.getCurrentlyCheckedInVisitors(),
+        employeeRepository.getAllEmployees()
     ) { visitors, employees ->
-        // Create a map of employee IDs to names for easy lookup
-        val employeeMap = employees.associateBy({ it.id }, { it.name })
+        // Create a map of employee IDs (String) to combined names for easy lookup
+        val employeeMap = employees.associateBy({ it.id }, { "${it.firstName} ${it.lastName}" })
         CheckOutUiState(
             checkedInVisitors = visitors,
             employees = employeeMap
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CheckOutUiState())
 
-    fun onCheckOut(log: CheckInLog) {
+    fun onCheckOut(log: VisitorLog) {
         viewModelScope.launch {
-            repository.logCheckOut(log)
+            // Call logCheckOut on VisitorLogRepository, passing the log's Firestore ID
+            visitorLogRepository.logCheckOut(log.id)
         }
     }
 }

@@ -2,7 +2,7 @@ package com.exposystems.welcomewave.ui.employeeselect
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.exposystems.welcomewave.data.Employee
+import com.exposystems.welcomewave.data.model.Employee
 import com.exposystems.welcomewave.data.repository.EmployeeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,20 +19,32 @@ data class EmployeeSelectUiState(
 
 @HiltViewModel
 class EmployeeSelectViewModel @Inject constructor(
-    employeeRepository: EmployeeRepository
+    @Suppress("UnusedPrivateProperty")
+    private val employeeRepository: EmployeeRepository
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
-    private val _employees = employeeRepository.getEmployees()
 
-    // Combine has been simplified to only use two flows
+    // Use the new getAllEmployees() method for real-time updates
+    private val _employees = employeeRepository.getAllEmployees()
+
     val uiState = combine(
         _searchQuery,
         _employees
     ) { query, employees ->
+        val filteredEmployees = if (query.isBlank()) {
+            employees
+        } else {
+            employees.filter { employee ->
+                // Filter by firstName or lastName (or both)
+                employee.firstName.contains(query, ignoreCase = true) ||
+                        employee.lastName.contains(query, ignoreCase = true) ||
+                        employee.email.contains(query, ignoreCase = true)
+            }
+        }
         EmployeeSelectUiState(
             searchQuery = query,
-            allEmployees = employees
+            allEmployees = filteredEmployees // Use the filtered list
         )
     }.stateIn(
         scope = viewModelScope,

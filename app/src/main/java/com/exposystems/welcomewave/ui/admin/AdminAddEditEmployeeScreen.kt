@@ -27,9 +27,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
+import coil.compose.AsyncImage // Corrected import from previous suggestion
+import java.io.File // Needed for File().toUri() if photoUrl is a local path
+import androidx.core.net.toUri // Needed to convert File to Uri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,7 +48,7 @@ fun AdminAddEditEmployeeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add Employee") },
+                title = { Text("Add/Edit Employee") }, // Changed title to reflect both actions
                 navigationIcon = {
                     IconButton(onClick = onNavigateUp) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -63,8 +64,16 @@ fun AdminAddEditEmployeeScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Updated to use uiState.photoUrl and handle local file paths if necessary
             AsyncImage(
-                model = uiState.photoUri?.toUri(),
+                // Assuming photoUrl can be a local file path or a remote URL
+                model = uiState.photoUrl?.let { path ->
+                    if (path.startsWith("content://") || path.startsWith("http")) {
+                        path
+                    } else {
+                        File(path).toUri() // Convert local file path to Uri for Coil
+                    }
+                },
                 contentDescription = "Employee Photo",
                 modifier = Modifier
                     .size(120.dp)
@@ -84,16 +93,28 @@ fun AdminAddEditEmployeeScreen(
 
             Spacer(Modifier.height(24.dp))
 
+            // Updated for firstName
             OutlinedTextField(
-                value = uiState.name,
-                onValueChange = viewModel::onNameChange,
-                label = { Text("Full Name") },
+                value = uiState.firstName, // Use firstName
+                onValueChange = viewModel::onFirstNameChange, // Use onFirstNameChange
+                label = { Text("First Name") },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))
+
+            // NEW: OutlinedTextField for lastName
             OutlinedTextField(
-                value = uiState.title,
-                onValueChange = viewModel::onTitleChange,
+                value = uiState.lastName, // Use lastName
+                onValueChange = viewModel::onLastNameChange, // Use onLastNameChange
+                label = { Text("Last Name") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+
+            // No change needed for title or email fields, just ensure they are connected to uiState.title and uiState.email
+            OutlinedTextField(
+                value = uiState.title, // Access uiState.title directly
+                onValueChange = viewModel::onTitleChange, // Calls viewModel::onTitleChange
                 label = { Text("Title / Position") },
                 modifier = Modifier.fillMaxWidth()
             )
