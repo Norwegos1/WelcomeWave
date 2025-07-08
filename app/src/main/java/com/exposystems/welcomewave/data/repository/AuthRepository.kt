@@ -15,19 +15,6 @@ class AuthRepository @Inject constructor(
     val currentUser: FirebaseUser?
         get() = firebaseAuth.currentUser
 
-    /**
-     * Registers a new user with email and password.
-     * @return The newly created FirebaseUser or null on failure.
-     */
-    suspend fun registerUser(email: String, password: String): FirebaseUser? {
-        return try {
-            val result = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
-            result.user
-        } catch (e: Exception) {
-            Log.e("AuthRepository", "Error registering user: ${e.message}", e)
-            null
-        }
-    }
 
     /**
      * Logs in an existing user with email and password.
@@ -45,22 +32,17 @@ class AuthRepository @Inject constructor(
 
     /**
      * Logs out the current user.
+     * Returns true on successful logout, false on error.
      */
-    fun logoutUser() {
-        firebaseAuth.signOut()
-    }
-
-    /**
-     * Sends a password reset email to the given email address.
-     * @return True if successful, false otherwise.
-     */
-    suspend fun sendPasswordResetEmail(email: String): Boolean {
+    // CHANGED: From fun logoutUser() to suspend fun signOut(): Boolean
+    fun signOut(): Boolean {
         return try {
-            firebaseAuth.sendPasswordResetEmail(email).await()
-            true
+            firebaseAuth.signOut()
+            true // Logout successful
         } catch (e: Exception) {
-            Log.e("AuthRepository", "Error sending password reset email: ${e.message}", e)
-            false
+            Log.e("AuthRepository", "Error logging out user: ${e.message}", e)
+            false // Logout failed
         }
     }
+
 }

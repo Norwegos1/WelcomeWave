@@ -1,13 +1,7 @@
 package com.exposystems.welcomewave.ui.admin
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -15,33 +9,56 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material.icons.automirrored.filled.ExitToApp // NEW: Import for logout icon
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect // NEW: Import LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController // NEW: Import NavController
+import com.exposystems.welcomewave.navigation.Screen // NEW: Import Screen for navigation routes
+import com.exposystems.welcomewave.ui.adminlogin.AdminLoginViewModel // NEW: Import AdminLoginViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminEmployeeListScreen(
-    viewModel: AdminEmployeeListViewModel = hiltViewModel(),
+    viewModel: AdminEmployeeListViewModel = hiltViewModel(), // Keep your EmployeeList ViewModel
+    authViewModel: AdminLoginViewModel = hiltViewModel(), // NEW: Inject AdminLoginViewModel for logout
+    navController: NavController, // NEW: Add NavController parameter
     onAddEmployeeClicked: () -> Unit,
-    onEditEmployeeClicked: (String) -> Unit, // CHANGED: Parameter type from Int to String
+    onEditEmployeeClicked: (String) -> Unit,
     onViewLogClicked: () -> Unit,
     onNavigateUp: () -> Unit
 ) {
     val employees by viewModel.employees.collectAsState()
+    val logoutSuccessful by authViewModel.logoutSuccessful.collectAsState() // NEW: Collect logout result
+
+    // NEW: LaunchedEffect to handle logout navigation
+    LaunchedEffect(logoutSuccessful) {
+        logoutSuccessful?.let { isSuccess ->
+            if (isSuccess) {
+                // Logout successful, navigate back to AdminLogin screen and clear back stack
+                navController.navigate(Screen.AdminLogin.route) {
+                    // This clears the entire back stack up to the root, then adds AdminLogin
+                    // ensuring a clean state after logout.
+                    popUpTo(navController.graph.startDestinationId) {
+                        inclusive = true
+                    }
+                }
+                authViewModel.clearLogoutState() // Clear the state after handling
+            } else {
+                // Handle logout failure (e.g., show a Toast or Snackbar)
+                // You might add a SnackbarHostState to show messages
+                // scaffoldState.snackbarHostState.showSnackbar("Logout failed. Please try again.")
+                authViewModel.clearLogoutState() // Clear the state even on failure
+            }
+        }
+    }
+
 
     Scaffold(
         topBar = {
@@ -59,6 +76,11 @@ fun AdminEmployeeListScreen(
                             contentDescription = "View Visitor Log"
                         )
                     }
+                    // --- NEW: Logout Button ---
+                    IconButton(onClick = { authViewModel.logout() }) {
+                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Logout")
+                    }
+                    // --- END NEW ---
                 }
             )
         },
@@ -75,11 +97,10 @@ fun AdminEmployeeListScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // It.id is now String, which is fine for the key parameter
             items(employees, key = { it.id }) { employee ->
                 EmployeeManagementListItem(
                     employee = employee,
-                    onEdit = { onEditEmployeeClicked(employee.id) }, // CHANGED: Pass employee.id (String)
+                    onEdit = { onEditEmployeeClicked(employee.id) },
                     onDelete = { viewModel.onDeleteEmployee(employee) }
                 )
             }
@@ -89,7 +110,7 @@ fun AdminEmployeeListScreen(
 
 @Composable
 private fun EmployeeManagementListItem(
-    employee: com.exposystems.welcomewave.data.model.Employee, // CHANGED: Ensure correct Employee model
+    employee: com.exposystems.welcomewave.data.model.Employee,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -106,9 +127,7 @@ private fun EmployeeManagementListItem(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                // CHANGED: Display first and last name
                 Text(text = "${employee.firstName} ${employee.lastName}", style = MaterialTheme.typography.titleMedium)
-                // CHANGED: Handle nullable title
                 Text(text = employee.title ?: "", style = MaterialTheme.typography.bodyMedium)
             }
             IconButton(onClick = onDelete) {

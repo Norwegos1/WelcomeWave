@@ -15,7 +15,7 @@ data class Employee(
     val title: String? = null, // Made nullable as per typical office data
     val photoUrl: String? = null, // Renamed from photoUri, nullable if photo is optional
     val department: String? = null, // Added department as discussed earlier
-    val isActive: Boolean = true, // Added for managing active/inactive employees
+    val isactive: Boolean = true, // Added for managing active/inactive employees
 
     // @ServerTimestamp automatically populates with the server's time
     // Useful for tracking creation/last update times consistently

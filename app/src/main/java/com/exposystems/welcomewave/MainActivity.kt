@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
 
                     composable(Screen.EmployeeSelect.route) {
                         EmployeeSelectScreen(
-                            onEmployeeSelected = { employeeId -> // employeeId is now String
+                            onEmployeeSelected = { employeeId ->
                                 navController.navigate(Screen.GuestDetails.createRoute(employeeId))
                             }
                         )
@@ -84,11 +84,10 @@ class MainActivity : ComponentActivity() {
 
                     composable(Screen.AdminEmployeeList.route) {
                         AdminEmployeeListScreen(
-                            // Pass "-1" as a String for new employee
+                            navController = navController, // NEW: Pass navController
                             onAddEmployeeClicked = {
                                 navController.navigate(Screen.AdminAddEditEmployee.createRoute("-1"))
                             },
-                            // employeeId here is already String from AdminEmployeeListScreen
                             onEditEmployeeClicked = { employeeId ->
                                 navController.navigate(Screen.AdminAddEditEmployee.createRoute(employeeId))
                             },
@@ -103,7 +102,6 @@ class MainActivity : ComponentActivity() {
 
                     composable(
                         route = Screen.AdminAddEditEmployee.route,
-                        // CHANGED: NavType.IntType to NavType.StringType (Line 89 in previous paste)
                         arguments = listOf(navArgument("employeeId") { type = NavType.StringType })
                     ) {
                         AdminAddEditEmployeeScreen(
@@ -115,7 +113,6 @@ class MainActivity : ComponentActivity() {
 
                     composable(
                         route = Screen.GuestDetails.route,
-                        // CHANGED: NavType.IntType to NavType.StringType (Line 93 in previous paste)
                         arguments = listOf(navArgument("employeeId") { type = NavType.StringType })
                     ) {
                         GuestDetailsScreen(

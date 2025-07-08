@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect // NEW: Import LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -16,7 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
-@OptIn(ExperimentalMaterial3Api::class) // Needed for TopAppBar or other experimental APIs
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminLoginScreen(
     viewModel: AdminLoginViewModel = hiltViewModel(),
@@ -24,6 +25,15 @@ fun AdminLoginScreen(
     onNavigateUp: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isLoggedIn by viewModel.isLoggedIn.collectAsState() // NEW: Collect isLoggedIn state
+
+    // NEW: LaunchedEffect to handle automatic redirection
+    LaunchedEffect(isLoggedIn) {
+        if (isLoggedIn) {
+            // If user is already logged in, immediately trigger the success navigation
+            onLoginSuccess()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -52,7 +62,6 @@ fun AdminLoginScreen(
                 textAlign = TextAlign.Center
             )
 
-            // Email Input Field
             OutlinedTextField(
                 value = uiState.email,
                 onValueChange = viewModel::onEmailChange,
@@ -63,22 +72,20 @@ fun AdminLoginScreen(
             )
             Spacer(Modifier.height(16.dp))
 
-            // Password Input Field
             OutlinedTextField(
                 value = uiState.password,
                 onValueChange = viewModel::onPasswordChange,
                 label = { Text("Password") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                visualTransformation = PasswordVisualTransformation(), // Hides password characters
+                visualTransformation = PasswordVisualTransformation(),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(0.7f)
             )
             Spacer(Modifier.height(24.dp))
 
-            // Login Button
             Button(
-                onClick = { viewModel.onLoginClicked(onLoginSuccess) },
-                enabled = !uiState.isLoading, // Disable button when loading
+                onClick = { viewModel.onLoginClicked() },
+                enabled = !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth(0.7f)
                     .height(56.dp)
@@ -90,7 +97,6 @@ fun AdminLoginScreen(
                 }
             }
 
-            // Display Error Message
             if (uiState.showError) {
                 Spacer(Modifier.height(16.dp))
                 Text(
@@ -101,7 +107,6 @@ fun AdminLoginScreen(
                     modifier = Modifier.fillMaxWidth(0.7f)
                 )
             }
-            // You might want to add a "Forgot Password?" or "Register" button later
         }
     }
 }
