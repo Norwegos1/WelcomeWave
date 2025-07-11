@@ -1,21 +1,20 @@
 package com.exposystems.welcomewave.ui.admin
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.exposystems.welcomewave.data.model.Employee
+import com.exposystems.welcomewave.data.repository.AuthRepository
 import com.exposystems.welcomewave.data.repository.EmployeeRepository
-import com.exposystems.welcomewave.data.repository.AuthRepository // IMPORT AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest // Import collectLatest
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await // Import await for getIdTokenResult
-
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
-import com.google.firebase.auth.FirebaseUser // Import FirebaseUser
-import com.google.firebase.auth.GetTokenResult // Import GetTokenResult
 
 @HiltViewModel
 class AdminEmployeeListViewModel @Inject constructor(
@@ -32,42 +31,44 @@ class AdminEmployeeListViewModel @Inject constructor(
     // --- END NEW ---
 
     init {
-        // --- NEW: Observe authentication state and load data conditionally ---
         viewModelScope.launch {
-            authRepository.currentUserFlow.collectLatest { firebaseUser: FirebaseUser? ->
+            authRepository.currentUserFlow.collectLatest { firebaseUser ->
                 if (firebaseUser != null) {
-                    _dataLoadState.value = DataLoadState.Loading // Start loading/checking auth
+                    _dataLoadState.value = DataLoadState.Loading
 
                     try {
-                        // Force refresh token to get the latest custom claims (important after setting claim)
-                        val idTokenResult: GetTokenResult = firebaseUser.1getIdTokenResult(true).await()
-                        val isAdmin: Boolean = (idTokenResult.claims?.get("admin") as? Boolean) ?: false
+                        val idTokenResult = firebaseUser.getIdToken(true).await()
+                        val isAdmin = (idTokenResult.claims["admin"] as? Boolean) ?: false
 
                         if (isAdmin) {
-                            // User is an admin, proceed to load employees
-                            employeeRepository.getAllEmployees().collectLatest { employeeList ->
-                                _employees.value = employeeList
-                                _dataLoadState.value = DataLoadState.Success
+                            // —— NEW: actually load employees ——
+                            viewModelScope.launch {
+                                employeeRepository.getAllEmployees()
+                                    .catch { e ->
+                                        _dataLoadState.value = DataLoadState.Error("Load failed: ${e.message}")
+                                        Log.e("AdminVM", "Error loading employees", e)
+                                    }
+                                    .collectLatest { list ->
+                                        Log.d("AdminVM", "Loaded ${list.size} employees")
+                                        _employees.value = list
+                                        _dataLoadState.value = DataLoadState.Success
+                                    }
                             }
                         } else {
-                            // User is logged in but NOT an admin (or claim not yet propagated)
                             _employees.value = emptyList()
                             _dataLoadState.value = DataLoadState.PermissionDenied
                         }
                     } catch (e: Exception) {
-                        // Handle errors during token refresh or claim check
                         _employees.value = emptyList()
-                        _dataLoadState.value = DataLoadState.Error("Authentication check failed: ${e.message}")
+                        _dataLoadState.value = DataLoadState.Error("Auth check failed: ${e.message}")
                     }
 
                 } else {
-                    // User is logged out
                     _employees.value = emptyList()
                     _dataLoadState.value = DataLoadState.NotAuthenticated
                 }
             }
         }
-        // --- END NEW ---
     }
 
     fun onDeleteEmployee(employee: Employee) {
