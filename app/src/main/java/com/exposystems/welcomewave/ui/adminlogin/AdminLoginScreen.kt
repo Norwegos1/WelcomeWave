@@ -1,14 +1,13 @@
 package com.exposystems.welcomewave.ui.adminlogin
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState // Import for scroll state
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll // Import for vertical scroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect // NEW: Import LaunchedEffect
+import androidx.compose.runtime.* // Import all runtime for remember, mutableStateOf, LaunchedEffect, getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -25,15 +24,33 @@ fun AdminLoginScreen(
     onNavigateUp: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val isLoggedIn by viewModel.isLoggedIn.collectAsState() // NEW: Collect isLoggedIn state
+    val isLoggedIn by viewModel.isLoggedIn.collectAsState()
+    val forgotPasswordResult by viewModel.forgotPasswordResult.collectAsState()
 
-    // NEW: LaunchedEffect to handle automatic redirection
+    // NEW: State for showing Forgot Password dialog
+    var showForgotPasswordDialog by remember { mutableStateOf(false) }
+    var forgotPasswordEmailInput by remember { mutableStateOf("") }
+
+    // LaunchedEffect to handle automatic redirection on login success
     LaunchedEffect(isLoggedIn) {
         if (isLoggedIn) {
-            // If user is already logged in, immediately trigger the success navigation
             onLoginSuccess()
         }
     }
+
+    // LaunchedEffect to handle Forgot Password result feedback
+    LaunchedEffect(forgotPasswordResult) {
+        forgotPasswordResult?.let { result ->
+            val message = if (result) "Password reset email sent. Check your inbox." else "Failed to send reset email. Check email or try again."
+            // In a real app, use a SnackbarHostState to show a Snackbar message
+            // scaffoldState.snackbarHostState.showSnackbar(message)
+            println(message) // For logging to console/logcat during development
+            showForgotPasswordDialog = false // Close dialog after action
+            viewModel.clearForgotPasswordResult() // Clear the state
+        }
+    }
+
+    val scrollState = rememberScrollState() // NEW: For scrollable content
 
     Scaffold(
         topBar = {
@@ -51,9 +68,11 @@ fun AdminLoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(32.dp),
+                .verticalScroll(scrollState) // Make column scrollable
+                .imePadding() // Adjust padding when keyboard is active
+                .padding(32.dp), // General padding for the content
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center // Keep center arrangement for overall layout
         ) {
             Text(
                 "Welcome Administrator",
@@ -97,6 +116,17 @@ fun AdminLoginScreen(
                 }
             }
 
+            Spacer(Modifier.height(8.dp)) // Spacing for new button
+
+            // NEW: Forgot Password Button
+            TextButton(
+                onClick = { showForgotPasswordDialog = true },
+                modifier = Modifier.fillMaxWidth(0.7f)
+            ) {
+                Text("Forgot Password?")
+            }
+
+
             if (uiState.showError) {
                 Spacer(Modifier.height(16.dp))
                 Text(
@@ -107,6 +137,41 @@ fun AdminLoginScreen(
                     modifier = Modifier.fillMaxWidth(0.7f)
                 )
             }
+        }
+
+
+        // NEW: Forgot Password Dialog
+        if (showForgotPasswordDialog) {
+            AlertDialog(
+                onDismissRequest = { showForgotPasswordDialog = false },
+                title = { Text("Reset Password") },
+                text = {
+                    Column {
+                        Text("Enter your email to receive a password reset link.")
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = forgotPasswordEmailInput,
+                            onValueChange = { forgotPasswordEmailInput = it },
+                            label = { Text("Email") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        viewModel.sendPasswordResetEmail(forgotPasswordEmailInput)
+                    }) {
+                        Text("Send Reset Link")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showForgotPasswordDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
 }

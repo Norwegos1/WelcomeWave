@@ -23,10 +23,13 @@ class AdminLoginViewModel @Inject constructor(
     private val _isLoggedIn = MutableStateFlow(false)
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
 
-    // --- NEW: State for logout result ---
-    private val _logoutSuccessful = MutableStateFlow<Boolean?>(null) // Null means no logout attempt yet, true/false for result
+    private val _logoutSuccessful = MutableStateFlow<Boolean?>(null)
     val logoutSuccessful: StateFlow<Boolean?> = _logoutSuccessful.asStateFlow()
-    // --- END NEW ---
+
+    // NEW: State for Forgot Password result
+    private val _forgotPasswordResult = MutableStateFlow<Boolean?>(null) // True for success, False for failure, null for no attempt
+    val forgotPasswordResult: StateFlow<Boolean?> = _forgotPasswordResult.asStateFlow()
+    // END NEW
 
     init {
         checkInitialLoginState()
@@ -58,30 +61,43 @@ class AdminLoginViewModel @Inject constructor(
             val user = authRepository.loginUser(email, password)
             if (user != null) {
                 _uiState.update { it.copy(isLoading = false, showError = false, errorMessage = null) }
-                _isLoggedIn.value = true // Indicate successful login to trigger navigation
+                _isLoggedIn.value = true
             } else {
                 _uiState.update { it.copy(isLoading = false, showError = true, errorMessage = "Invalid email or password.") }
             }
         }
     }
 
-    // --- NEW FUNCTION: Logout ---
     fun logout() {
         viewModelScope.launch {
             val result = authRepository.signOut()
-            _logoutSuccessful.value = result // Update the state with true/false based on logout success
-            if (result) { // If logout was successful
-                _isLoggedIn.value = false // Update login state
-                _uiState.update { it.copy(email = "", password = "") } // Clear login fields for next login
+            _logoutSuccessful.value = result
+            if (result) {
+                _isLoggedIn.value = false
+                _uiState.update { it.copy(email = "", password = "") }
             }
-            // No need to show error on UI for logout usually, just log it.
         }
     }
 
-    // NEW: Function to clear the logout state after UI consumes it
     fun clearLogoutState() {
         _logoutSuccessful.value = null
     }
 
+    // NEW: Function to send password reset email
+    fun sendPasswordResetEmail(email: String) {
+        if (email.isBlank()) {
+            // Optional: Handle empty email for password reset
+            return
+        }
+        viewModelScope.launch {
+            _forgotPasswordResult.value = null // Clear previous result
+            val success = authRepository.sendPasswordResetEmail(email) // Assumes AuthRepository has this function
+            _forgotPasswordResult.value = success
+        }
+    }
 
+    // NEW: Function to clear Forgot Password result state
+    fun clearForgotPasswordResult() {
+        _forgotPasswordResult.value = null
+    }
 }

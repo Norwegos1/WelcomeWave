@@ -3,10 +3,10 @@ package com.exposystems.welcomewave.data.repository
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
-import kotlinx.coroutines.flow.Flow // Import Flow
-import kotlinx.coroutines.flow.callbackFlow // Import callbackFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.channels.awaitClose // Import awaitClose
+import kotlinx.coroutines.channels.awaitClose
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,19 +18,36 @@ class AuthRepository @Inject constructor(
     val currentUser: FirebaseUser?
         get() = firebaseAuth.currentUser
 
-    // --- NEW: Expose current user as a Flow for reactive updates ---
-    // This flow will emit the current FirebaseUser whenever the auth state changes (login, logout)
+    /**
+     * Exposes the current FirebaseUser as a Flow for reactive updates.
+     * Emits the current user whenever the authentication state changes (login, logout).
+     */
     val currentUserFlow: Flow<FirebaseUser?> = callbackFlow {
         val authStateListener = FirebaseAuth.AuthStateListener { auth ->
-            trySend(auth.currentUser) // Emit the current user
+            trySend(auth.currentUser)
         }
         firebaseAuth.addAuthStateListener(authStateListener)
         awaitClose {
-            firebaseAuth.removeAuthStateListener(authStateListener) // Clean up listener
+            firebaseAuth.removeAuthStateListener(authStateListener)
         }
     }
-    // --- END NEW ---
 
+    /**
+     * Registers a new user with email and password.
+     * @return The newly created FirebaseUser or null on failure.
+     */
+    // Removed based on earlier discussion (public admin registration disabled for now)
+    /*
+    suspend fun registerUser(email: String, password: String): FirebaseUser? {
+        return try {
+            val result = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
+            result.user
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Error registering user: ${e.message}", e)
+            null
+        }
+    }
+    */
 
     /**
      * Logs in an existing user with email and password.
@@ -59,4 +76,19 @@ class AuthRepository @Inject constructor(
             false // Logout failed
         }
     }
+
+    /**
+     * Sends a password reset email to the given email address.
+     * @return True if successful, false otherwise.
+     */
+    suspend fun sendPasswordResetEmail(email: String): Boolean {
+        return try {
+            firebaseAuth.sendPasswordResetEmail(email).await()
+            true
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Error sending password reset email: ${e.message}", e)
+            false
+        }
+    }
+    // --- END NEW ---
 }

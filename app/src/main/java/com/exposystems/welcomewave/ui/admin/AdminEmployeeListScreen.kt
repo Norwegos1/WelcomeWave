@@ -26,16 +26,16 @@ import com.exposystems.welcomewave.ui.adminlogin.AdminLoginViewModel // NEW: Imp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminEmployeeListScreen(
-    viewModel: AdminEmployeeListViewModel = hiltViewModel(), // Keep your EmployeeList ViewModel
-    authViewModel: AdminLoginViewModel = hiltViewModel(), // NEW: Inject AdminLoginViewModel for logout
-    navController: NavController, // NEW: Add NavController parameter
+    viewModel: AdminEmployeeListViewModel = hiltViewModel(),
+    authViewModel: AdminLoginViewModel = hiltViewModel(),
+    navController: NavController,
     onAddEmployeeClicked: () -> Unit,
     onEditEmployeeClicked: (String) -> Unit,
     onViewLogClicked: () -> Unit,
     onNavigateUp: () -> Unit
 ) {
     val employees by viewModel.employees.collectAsState()
-    val logoutSuccessful by authViewModel.logoutSuccessful.collectAsState() // NEW: Collect logout result
+    val logoutSuccessful by authViewModel.logoutSuccessful.collectAsState()
 
     // NEW: LaunchedEffect to handle logout navigation
     LaunchedEffect(logoutSuccessful) {
@@ -49,7 +49,7 @@ fun AdminEmployeeListScreen(
                         inclusive = true
                     }
                 }
-                authViewModel.clearLogoutState() // Clear the state after handling
+                authViewModel.clearLogoutState()
             } else {
                 // Handle logout failure (e.g., show a Toast or Snackbar)
                 // You might add a SnackbarHostState to show messages

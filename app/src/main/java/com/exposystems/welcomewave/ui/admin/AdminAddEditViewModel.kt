@@ -8,122 +8,163 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.exposystems.welcomewave.data.model.Employee // Ensure this imports your NEW Employee data class
+import com.exposystems.welcomewave.data.model.Employee
 import com.exposystems.welcomewave.data.repository.EmployeeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.launch
-import java.io.File
-import java.util.UUID
 import javax.inject.Inject
 
+/**
+ * UI state for the Add/Edit Employee screen.
+ */
 data class AddEditUiState(
-    val firstName: String = "", // Changed from 'name'
-    val lastName: String = "",  // Added
-    val title: String = "",
+    val firstName: String = "",
+    val lastName: String = "",
     val email: String = "",
-    val photoUrl: String? = null // Changed from photoUri
+    val title: String = "",
+    val department: String = "",
+    val photoUrl: String? = null,
+    val isActive: Boolean = true,
+    val isLoading: Boolean = false,
+    val showError: Boolean = false,
+    val errorMessage: String? = null,
+    val isNewEmployee: Boolean = false
 )
 
 @HiltViewModel
 class AdminAddEditViewModel @Inject constructor(
-    private val employeeRepository: EmployeeRepository, // Renamed 'repository' for clarity
+    private val employeeRepository: EmployeeRepository,
     savedStateHandle: SavedStateHandle,
-    @ApplicationContext private val application: Context
+    @Suppress("unused") @ApplicationContext private val application: Context
 ) : ViewModel() {
 
     var uiState by mutableStateOf(AddEditUiState())
         private set
 
-    // Changed from Int? to String? for Firestore IDs
     private var existingEmployeeId: String? = null
 
     init {
-        // We get the employeeId from the handle here...
-        // Retrieve as String, not Int
         existingEmployeeId = savedStateHandle["employeeId"]
-        if (existingEmployeeId != null && existingEmployeeId != "-1") { // Check against string for placeholder
+        if (existingEmployeeId != null && existingEmployeeId != "-1") {
+            // Logic for editing an existing employee
+            uiState = uiState.copy(isNewEmployee = false)
             loadEmployee(existingEmployeeId!!)
+        } else {
+            // Logic for adding a new employee
+            uiState = uiState.copy(isNewEmployee = true)
         }
     }
 
-    private fun loadEmployee(id: String) { // Changed ID type to String
+    private fun loadEmployee(id: String) {
         viewModelScope.launch {
-            employeeRepository.getEmployeeById(id)?.let { employee -> // Changed to getEmployeeById
-                uiState = uiState.copy(
-                    firstName = employee.firstName, // Use new fields
-                    lastName = employee.lastName,   // Use new fields
-                    title = employee.title ?: "",   // Handle nullable title
-                    email = employee.email,
-                    photoUrl = employee.photoUrl    // Use new field
-                )
+            uiState = uiState.copy(isLoading = true, showError = false)
+            try {
+                employeeRepository.getEmployeeById(id)?.let { employee ->
+                    uiState = uiState.copy(
+                        firstName = employee.firstName,
+                        lastName = employee.lastName,
+                        email = employee.email,
+                        title = employee.title ?: "",
+                        department = employee.department ?: "",
+                        photoUrl = employee.photoUrl,
+                        isActive = employee.isactive,
+                        isLoading = false
+                    )
+                } ?: run {
+                    uiState = uiState.copy(showError = true, errorMessage = "Employee not found.", isLoading = false)
+                }
+            } catch (e: Exception) {
+                uiState = uiState.copy(showError = true, errorMessage = "Error loading employee: ${e.message}", isLoading = false)
             }
         }
     }
 
-    fun onFirstNameChange(name: String) { // Renamed from onNameChange
-        uiState = uiState.copy(firstName = name)
+    fun onFirstNameChange(name: String) {
+        uiState = uiState.copy(firstName = name, showError = false, errorMessage = null)
     }
 
-    fun onLastNameChange(name: String) { // Added for lastName
-        uiState = uiState.copy(lastName = name)
+    fun onLastNameChange(name: String) {
+        uiState = uiState.copy(lastName = name, showError = false, errorMessage = null)
     }
 
     fun onTitleChange(title: String) {
-        uiState = uiState.copy(title = title)
+        uiState = uiState.copy(title = title, showError = false, errorMessage = null)
     }
 
     fun onEmailChange(email: String) {
-        uiState = uiState.copy(email = email)
+        uiState = uiState.copy(email = email, showError = false, errorMessage = null)
     }
 
+    fun onDepartmentChange(department: String) {
+        uiState = uiState.copy(department = department, showError = false, errorMessage = null)
+    }
+
+    fun onIsActiveChange(active: Boolean) {
+        uiState = uiState.copy(isActive = active)
+    }
+
+    /**
+     * Handles selection of a photo URI (e.g., from gallery).
+     * In a real app, this would trigger an upload to Firebase Storage.
+     */
     fun onPhotoSelected(uri: Uri?) {
         if (uri == null) return
 
         viewModelScope.launch {
-            val fileName = "employee_${UUID.randomUUID()}.jpg"
-            val inputStream = application.contentResolver.openInputStream(uri)
-            val file = File(application.filesDir, fileName)
-
-            inputStream?.use { input ->
-                file.outputStream().use { output ->
-                    input.copyTo(output)
-                }
-            }
-            // Store local file path for now; upload to Firebase Storage later
-            uiState = uiState.copy(photoUrl = file.absolutePath)
+            val photoPath = uri.toString()
+            uiState = uiState.copy(photoUrl = photoPath)
         }
     }
 
-    fun saveEmployee() {
-        // Validate required fields (using firstName for name validation)
-        if (uiState.firstName.isBlank() || uiState.lastName.isBlank() || uiState.email.isBlank()) return
+    /**
+     * Handles saving a new or updated employee.
+     * @param onNavigateUp Callback to navigate back on successful save.
+     */
+    fun onSaveEmployeeClicked(onNavigateUp: () -> Unit) {
+        // Basic validation for required fields
+        if (uiState.firstName.isBlank() || uiState.lastName.isBlank() || uiState.email.isBlank()) {
+            uiState = uiState.copy(showError = true, errorMessage = "First Name, Last Name, and Email are required.")
+            return
+        }
+        // Basic email format validation
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(uiState.email).matches()) {
+            uiState = uiState.copy(showError = true, errorMessage = "Please enter a valid email address.")
+            return
+        }
+
+        uiState = uiState.copy(isLoading = true, showError = false, errorMessage = null)
 
         viewModelScope.launch {
-            if (existingEmployeeId == null || existingEmployeeId == "-1") { // Check against string for placeholder
-                // Logic for a NEW employee
-                val newEmployee = Employee(
-                    // Firestore will auto-generate 'id' if left as default empty string
-                    firstName = uiState.firstName.trim(),
-                    lastName = uiState.lastName.trim(),
-                    email = uiState.email.trim(),
-                    title = uiState.title.trim().takeIf { it.isNotBlank() }, // Ensure empty string becomes null
-                    photoUrl = uiState.photoUrl
-                    // createdAt and updatedAt will be set by @ServerTimestamp
-                )
-                employeeRepository.addEmployee(newEmployee)
-            } else {
-                // Logic for an EXISTING employee
-                val updatedEmployee = Employee(
-                    id = existingEmployeeId!!, // Use the existing Firestore String ID
-                    firstName = uiState.firstName.trim(),
-                    lastName = uiState.lastName.trim(),
-                    email = uiState.email.trim(),
-                    title = uiState.title.trim().takeIf { it.isNotBlank() }, // Ensure empty string becomes null
-                    photoUrl = uiState.photoUrl
-                    // updatedAt will be set by @ServerTimestamp
-                )
-                employeeRepository.updateEmployee(updatedEmployee)
+            try {
+                if (uiState.isNewEmployee) {
+                    val newEmployee = Employee(
+                        firstName = uiState.firstName.trim(),
+                        lastName = uiState.lastName.trim(),
+                        email = uiState.email.trim(),
+                        title = uiState.title.trim().takeIf { it.isNotBlank() },
+                        department = uiState.department.trim().takeIf { it.isNotBlank() },
+                        photoUrl = uiState.photoUrl,
+                        isactive = uiState.isActive
+                    )
+                    employeeRepository.addEmployee(newEmployee)
+                } else {
+                    val updatedEmployee = Employee(
+                        id = existingEmployeeId!!,
+                        firstName = uiState.firstName.trim(),
+                        lastName = uiState.lastName.trim(),
+                        email = uiState.email.trim(),
+                        title = uiState.title.trim().takeIf { it.isNotBlank() },
+                        department = uiState.department.trim().takeIf { it.isNotBlank() },
+                        photoUrl = uiState.photoUrl,
+                        isactive = uiState.isActive
+                    )
+                    employeeRepository.updateEmployee(updatedEmployee)
+                }
+                uiState = uiState.copy(isLoading = false)
+                onNavigateUp() // Navigate back on success
+            } catch (e: Exception) {
+                uiState = uiState.copy(isLoading = false, showError = true, errorMessage = "Failed to save employee: ${e.message}")
             }
         }
     }

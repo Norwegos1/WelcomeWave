@@ -9,13 +9,13 @@ data class Employee(
     // When adding a new document, if 'id' is empty, Firestore generates a unique ID.
     @DocumentId
     val id: String = "",
-    val firstName: String = "", // Changed 'name' to 'firstName' based on typical breakdown
-    val lastName: String = "",  // Added 'lastName'
+    val firstName: String = "",
+    val lastName: String = "",
     val email: String = "",
-    val title: String? = null, // Made nullable as per typical office data
-    val photoUrl: String? = null, // Renamed from photoUri, nullable if photo is optional
-    val department: String? = null, // Added department as discussed earlier
-    val isactive: Boolean = true, // Added for managing active/inactive employees
+    val title: String? = null,
+    val photoUrl: String? = null,
+    val department: String? = null,
+    val isactive: Boolean = true,
 
     // @ServerTimestamp automatically populates with the server's time
     // Useful for tracking creation/last update times consistently
