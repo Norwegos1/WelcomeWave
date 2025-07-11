@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "com.exposystems.welcomewave"
-        minSdk = 24
+        minSdk = 26
         //noinspection OldTargetApi
         targetSdk = 34
         versionCode = 1
@@ -42,7 +42,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
+        kotlinCompilerExtensionVersion = "1.5.4"
     }
     packaging {
         resources {
@@ -68,6 +68,9 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.auth.ktx)
+    implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.play.services.tasks)
+
 
     // Video Player
     implementation(libs.bundles.media3)
@@ -76,11 +79,6 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
-
-    // Room
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
-    ksp(libs.room.compiler)
 
     // Retrofit & Coil
     implementation(libs.retrofit)
