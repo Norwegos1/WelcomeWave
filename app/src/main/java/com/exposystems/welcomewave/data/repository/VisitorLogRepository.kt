@@ -17,7 +17,6 @@ import javax.inject.Singleton
 
 @Singleton
 class VisitorLogRepository @Inject constructor(
-    @Suppress("PrivatePropertyName")
     private val firestore: FirebaseFirestore,
     @Suppress("UnusedPrivateProperty")
     private val notificationApiService: NotificationApiService
