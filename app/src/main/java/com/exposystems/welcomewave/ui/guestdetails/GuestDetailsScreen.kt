@@ -31,6 +31,19 @@ fun GuestDetailsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    uiState.errorMessage?.let { message ->
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissError() },
+            title = { Text("Check-In Failed") },
+            text = { Text(message) },
+            confirmButton = {
+                Button(onClick = { viewModel.dismissError() }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -50,12 +63,11 @@ fun GuestDetailsScreen(
             )
         }
     ) { paddingValues ->
-        // Added check for loading state
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-        } else { // WHEN YOU ARE IN THIS 'ELSE' BLOCK, uiState.isLoading IS GUARANTEED TO BE FALSE
+        } else {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -105,7 +117,7 @@ fun GuestDetailsScreen(
                     Spacer(modifier = Modifier.height(24.dp))
                     Button(
                         onClick = { viewModel.checkInGuests(onCheckInComplete) },
-                        enabled = uiState.isCheckInEnabled, // CHANGED: Removed '&& !uiState.isLoading'
+                        enabled = uiState.isCheckInEnabled,
                         modifier = Modifier
                             .fillMaxWidth(0.8f)
                             .height(64.dp)

@@ -21,9 +21,8 @@ class WelcomeViewModel @Inject constructor() : ViewModel() {
 
     private val _uiState = MutableStateFlow(WelcomeUiState())
     val uiState = _uiState.asStateFlow()
-
-    private var tapCount = 0
-    private var guestNavigationJob: Job? = null
+    private var adminTapCount = 0
+    private var resetAdminTapJob: Job? = null
 
     init {
         updateGreeting()
@@ -40,18 +39,18 @@ class WelcomeViewModel @Inject constructor() : ViewModel() {
         _uiState.update { it.copy(greeting = newGreeting) }
     }
 
-    fun onScreenTapped(onGuestNavigate: () -> Unit, onAdminNavigate: () -> Unit) {
-        guestNavigationJob?.cancel()
+    fun onAdminGestureTapped(onAdminNavigate: () -> Unit) {
+        resetAdminTapJob?.cancel() // Cancel any previous reset job
 
-        tapCount++
-        if (tapCount >= 5) {
-            tapCount = 0
+        adminTapCount++
+        if (adminTapCount >= 5) {
+            adminTapCount = 0
             onAdminNavigate()
         } else {
-            guestNavigationJob = viewModelScope.launch {
-                delay(300)
-                onGuestNavigate()
-                tapCount = 0
+            // Launch a job to reset the tap count after 2 seconds
+            resetAdminTapJob = viewModelScope.launch {
+                delay(2000)
+                adminTapCount = 0
             }
         }
     }

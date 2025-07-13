@@ -8,6 +8,7 @@ sealed class Screen(val route: String) {
         // CHANGED: Accept String employeeId
         fun createRoute(employeeId: String) = "guest_details_screen/$employeeId"
     }
+    object PreRegisteredGuestList : Screen("pre_registered_guest_list")
     data object Confirmation : Screen("confirmation_screen")
     data object AdminLogin : Screen("admin_login_screen")
     data object AdminEmployeeList : Screen("admin_employee_list_screen")

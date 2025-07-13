@@ -4,9 +4,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.exposystems.welcomewave.data.CheckInRequest
-import com.exposystems.welcomewave.data.model.Employee // Ensure this imports your NEW Employee data class
+import com.exposystems.welcomewave.data.model.Employee
 import com.exposystems.welcomewave.data.repository.EmployeeRepository
-import com.exposystems.welcomewave.data.repository.VisitorLogRepository // NEW: Import VisitorLogRepository
+import com.exposystems.welcomewave.data.repository.VisitorLogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
-// Guest and GuestDetailsUiState data classes remain the same...
 data class Guest(
     val id: UUID = UUID.randomUUID(),
     val name: String = ""
@@ -26,13 +25,14 @@ data class GuestDetailsUiState(
     val companyName: String = "",
     val guests: List<Guest> = listOf(Guest()),
     val isCheckInEnabled: Boolean = false,
-    val isLoading: Boolean = false // Added for loading state
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null // UPDATED: To hold error messages
 )
 
 @HiltViewModel
 class GuestDetailsViewModel @Inject constructor(
     private val employeeRepository: EmployeeRepository,
-    private val visitorLogRepository: VisitorLogRepository, // NEW: Inject VisitorLogRepository
+    private val visitorLogRepository: VisitorLogRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -40,18 +40,18 @@ class GuestDetailsViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     init {
-        // Retrieve employeeId as String for Firestore
         val employeeId: String? = savedStateHandle["employeeId"]
-        if (employeeId != null && employeeId != "-1") { // Check against String placeholder
+        if (employeeId != null && employeeId != "-1") {
             loadEmployeeDetails(employeeId)
         }
     }
 
-    private fun loadEmployeeDetails(employeeId: String) { // Changed ID type to String
+    private fun loadEmployeeDetails(employeeId: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) } // Set loading
-            val employee = employeeRepository.getEmployeeById(employeeId) // Changed to getEmployeeById
-            _uiState.update { it.copy(selectedEmployee = employee, isLoading = false) } // Update and unset loading
+            _uiState.update { it.copy(isLoading = true) }
+            val employee = employeeRepository.getEmployeeById(employeeId)
+            _uiState.update { it.copy(selectedEmployee = employee, isLoading = false) }
+            validateCheckIn()
         }
     }
 
@@ -80,18 +80,17 @@ class GuestDetailsViewModel @Inject constructor(
             if (currentState.guests.size > 1) {
                 currentState.copy(guests = currentState.guests.filterNot { it.id == id })
             } else {
-                currentState // Don't remove if only one guest left
+                currentState
             }
         }
         validateCheckIn()
     }
 
-    // This is the new function that calls the VisitorLogRepository
     fun checkInGuests(onCheckInComplete: () -> Unit) {
-        if (!uiState.value.isCheckInEnabled || uiState.value.isLoading) return // Prevent multiple clicks
+        if (!uiState.value.isCheckInEnabled || uiState.value.isLoading) return
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) } // Set loading
+            _uiState.update { it.copy(isLoading = true) }
             uiState.value.selectedEmployee?.let { employee ->
                 val request = CheckInRequest(
                     employeeEmail = employee.email,
@@ -99,21 +98,24 @@ class GuestDetailsViewModel @Inject constructor(
                     visitorNames = uiState.value.guests.map { it.name }
                 )
 
-                // IMPORTANT: Now call logCheckIn from VisitorLogRepository
                 val success = visitorLogRepository.logCheckIn(
                     checkInRequest = request,
-                    employeeFirestoreId = employee.id, // Pass Firestore String ID
-                    employeeName = "${employee.firstName} ${employee.lastName}" // Pass denormalized name
+                    employeeFirestoreId = employee.id,
+                    employeeName = "${employee.firstName} ${employee.lastName}"
                 )
 
                 if (success) {
                     onCheckInComplete()
                 } else {
-                    // TODO: Handle error, show a message to the user
+                    _uiState.update { it.copy(errorMessage = "Check-in failed. Please check your network connection and try again.") }
                 }
             }
-            _uiState.update { it.copy(isLoading = false) } // Unset loading
+            _uiState.update { it.copy(isLoading = false) }
         }
+    }
+
+    fun dismissError() {
+        _uiState.update { it.copy(errorMessage = null) }
     }
 
     private fun validateCheckIn() {

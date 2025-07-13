@@ -2,13 +2,7 @@ package com.exposystems.welcomewave.ui.welcome
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -18,7 +12,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -30,23 +23,13 @@ fun WelcomeScreen(
     viewModel: WelcomeViewModel = hiltViewModel(),
     onGuestNavigate: () -> Unit,
     onAdminNavigate: () -> Unit,
-    onCheckOutNavigate: () -> Unit
+    onCheckOutNavigate: () -> Unit,
+    onPreRegisteredNavigate: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = {
-                        viewModel.onScreenTapped(
-                            onGuestNavigate = onGuestNavigate,
-                            onAdminNavigate = onAdminNavigate
-                        )
-                    }
-                )
-            }
+        modifier = Modifier.fillMaxSize()
     ) {
         VideoPlayer(
             videoResourceId = R.raw.logo_splash,
@@ -57,38 +40,63 @@ fun WelcomeScreen(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // --- Top Section ---
-            // A Column to group the greeting and title together
             Column(
-                modifier = Modifier.padding(top = 64.dp),
+                modifier = Modifier
+                    .padding(top = 64.dp)
+                    .pointerInput(Unit) {
+                        detectTapGestures(onTap = { viewModel.onAdminGestureTapped(onAdminNavigate) })
+                    },
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // The dynamic greeting with a slightly smaller font
                 Text(
                     text = uiState.greeting,
                     style = MaterialTheme.typography.headlineLarge,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onPrimary,
                 )
-                // The static welcome title with a more subtle appearance
                 Text(
                     text = stringResource(id = R.string.welcome_title),
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White.copy(alpha = 0.8f) // Make it slightly transparent
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                 )
             }
 
-            // This spacer pushes the logo and bottom content apart
             Spacer(modifier = Modifier.weight(1f))
 
-            // --- Bottom Section ---
-            Text(
-                text = stringResource(id = R.string.welcome_prompt),
-                style = MaterialTheme.typography.titleLarge,
-                color = Color.White
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth(0.4f)
+            ) {
+                // Button for pre-registered guests
+                OutlinedButton(
+                    onClick = onPreRegisteredNavigate,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+                    border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                ) {
+                    Text("Pre-Registered Check-In", style = MaterialTheme.typography.titleLarge)
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Button for walk-in guests
+                OutlinedButton(
+                    onClick = onGuestNavigate,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+                    border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                ) {
+                    Text("Walk-In Check-In", style = MaterialTheme.typography.titleLarge)
+                }
+            }
+
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Check-out button
             OutlinedButton(
                 onClick = onCheckOutNavigate,
                 modifier = Modifier
@@ -104,7 +112,7 @@ fun WelcomeScreen(
                     style = MaterialTheme.typography.titleLarge
                 )
             }
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }

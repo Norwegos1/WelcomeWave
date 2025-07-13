@@ -22,6 +22,7 @@ import com.exposystems.welcomewave.ui.checkout.CheckOutScreen
 import com.exposystems.welcomewave.ui.confirmation.ConfirmationScreen
 import com.exposystems.welcomewave.ui.employeeselect.EmployeeSelectScreen
 import com.exposystems.welcomewave.ui.guestdetails.GuestDetailsScreen
+import com.exposystems.welcomewave.ui.preregistered.PreRegisteredGuestListScreen // Import the new screen
 import com.exposystems.welcomewave.ui.theme.WelcomeWaveTheme
 import com.exposystems.welcomewave.ui.welcome.WelcomeScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -31,13 +32,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
         enableEdgeToEdge()
-
         val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
         windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         windowInsetsController.hide(WindowInsetsCompat.Type.navigationBars())
-
 
         setContent {
             WelcomeWaveTheme {
@@ -56,7 +54,18 @@ class MainActivity : ComponentActivity() {
                             },
                             onCheckOutNavigate = {
                                 navController.navigate(Screen.CheckOut.route)
+                            },
+                            // UPDATED #1: Added the new navigation action
+                            onPreRegisteredNavigate = {
+                                navController.navigate(Screen.PreRegisteredGuestList.route)
                             }
+                        )
+                    }
+
+                    // UPDATED #2: Added the new composable destination
+                    composable(Screen.PreRegisteredGuestList.route) {
+                        PreRegisteredGuestListScreen(
+                            onNavigateUp = { navController.navigateUp() }
                         )
                     }
 
@@ -76,15 +85,13 @@ class MainActivity : ComponentActivity() {
                                     popUpTo(Screen.AdminLogin.route) { inclusive = true }
                                 }
                             },
-                            onNavigateUp = {
-                                navController.navigateUp()
-                            }
+                            onNavigateUp = { navController.navigateUp() }
                         )
                     }
 
                     composable(Screen.AdminEmployeeList.route) {
                         AdminEmployeeListScreen(
-                            navController = navController, // NEW: Pass navController
+                            navController = navController,
                             onAddEmployeeClicked = {
                                 navController.navigate(Screen.AdminAddEditEmployee.createRoute("-1"))
                             },
@@ -94,9 +101,7 @@ class MainActivity : ComponentActivity() {
                             onViewLogClicked = {
                                 navController.navigate(Screen.AdminVisitorLog.route)
                             },
-                            onNavigateUp = {
-                                navController.navigateUp()
-                            }
+                            onNavigateUp = { navController.navigateUp() }
                         )
                     }
 
@@ -105,9 +110,7 @@ class MainActivity : ComponentActivity() {
                         arguments = listOf(navArgument("employeeId") { type = NavType.StringType })
                     ) {
                         AdminAddEditEmployeeScreen(
-                            onNavigateUp = {
-                                navController.navigateUp()
-                            }
+                            onNavigateUp = { navController.navigateUp() }
                         )
                     }
 
@@ -121,9 +124,7 @@ class MainActivity : ComponentActivity() {
                                     popUpTo(Screen.Welcome.route)
                                 }
                             },
-                            onNavigateUp = {
-                                navController.navigateUp()
-                            }
+                            onNavigateUp = { navController.navigateUp() }
                         )
                     }
 
