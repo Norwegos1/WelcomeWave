@@ -20,7 +20,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun PreRegisteredGuestListScreen(
     viewModel: PreRegisteredViewModel = hiltViewModel(),
-    onNavigateUp: () -> Unit
+    onNavigateUp: () -> Unit,
+    onCheckInComplete: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -46,20 +47,24 @@ fun PreRegisteredGuestListScreen(
             contentAlignment = Alignment.Center
         ) {
             when {
-                uiState.isLoading -> {
+                uiState.isLoading && uiState.guests.isEmpty() -> {
                     CircularProgressIndicator()
                 }
+
                 uiState.error != null -> {
                     Text("Error: ${uiState.error}")
                 }
+
                 uiState.guests.isEmpty() -> {
                     Text("No pre-registered guests found.")
                 }
+
                 else -> {
                     GuestList(
                         guests = uiState.guests,
+                        checkingInGuestId = uiState.checkingInGuestId,
                         onGuestClicked = { guest ->
-                            viewModel.checkInGuest(guest)
+                            viewModel.checkInGuest(guest, onCheckInComplete)
                         }
                     )
                 }
@@ -71,6 +76,7 @@ fun PreRegisteredGuestListScreen(
 @Composable
 private fun GuestList(
     guests: List<PreRegisteredGuest>,
+    checkingInGuestId: String?,
     onGuestClicked: (PreRegisteredGuest) -> Unit
 ) {
     LazyColumn(
@@ -80,6 +86,7 @@ private fun GuestList(
         items(guests, key = { it.id }) { guest ->
             GuestListItem(
                 guest = guest,
+                isCheckingIn = guest.id == checkingInGuestId,
                 onClick = { onGuestClicked(guest) }
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -90,34 +97,47 @@ private fun GuestList(
 @Composable
 private fun GuestListItem(
     guest: PreRegisteredGuest,
+    isCheckingIn: Boolean,
     onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable(enabled = !isCheckingIn, onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
         ) {
-            Text(
-                text = guest.visitorName,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            guest.visitorCompany?.let { company ->
-                Text(
-                    text = "From: $company",
-                    style = MaterialTheme.typography.bodyLarge
-                )
+            if (isCheckingIn) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else {
+                Column {
+                    Text(
+                        text = guest.visitorName,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    guest.visitorCompany?.let { company ->
+                        Text(
+                            text = "From: $company",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "To see: ${guest.employeeToSeeName}",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "To see: ${guest.employeeToSee}",
-                style = MaterialTheme.typography.bodyLarge
-            )
         }
     }
 }

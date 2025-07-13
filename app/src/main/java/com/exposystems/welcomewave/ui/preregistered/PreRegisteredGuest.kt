@@ -4,5 +4,6 @@ data class PreRegisteredGuest(
     val id: String = "",
     val visitorName: String = "",
     val visitorCompany: String? = null,
-    val employeeToSee: String = ""
+    val employeeToSeeId: String = "",
+    val employeeToSeeName: String = ""
 )

@@ -19,8 +19,10 @@ import javax.inject.Inject
 data class PreRegisteredUiState(
     val isLoading: Boolean = false,
     val guests: List<PreRegisteredGuest> = emptyList(),
-    val error: String? = null
+    val error: String? = null,
+    val checkingInGuestId: String? = null
 )
+
 
 @HiltViewModel
 class PreRegisteredViewModel @Inject constructor(
@@ -51,7 +53,8 @@ class PreRegisteredViewModel @Inject constructor(
                         id = doc.id,
                         visitorName = doc.getString("visitorName") ?: "Unknown Visitor",
                         visitorCompany = doc.getString("visitorCompany"),
-                        employeeToSee = doc.getString("employeeToSee") ?: "Unknown Employee"
+                        employeeToSeeId = doc.getString("employeeToSeeId") ?: "",
+                        employeeToSeeName = doc.getString("employeeToSeeName") ?: "Unknown Employee"
                     )
                 }
                 _uiState.update { it.copy(isLoading = false, guests = guestList) }
@@ -63,12 +66,18 @@ class PreRegisteredViewModel @Inject constructor(
         }
     }
 
-    fun checkInGuest(guest: PreRegisteredGuest) {
+    fun checkInGuest(guest: PreRegisteredGuest, onCheckInComplete: () -> Unit) {
         viewModelScope.launch {
+            _uiState.update { it.copy(checkingInGuestId = guest.id) }
             try {
-                val employee = employeeRepository.getEmployeeById(guest.employeeToSee)
+                val employee = employeeRepository.getEmployeeById(guest.employeeToSeeId)
                 if (employee == null) {
-                    _uiState.update { it.copy(error = "Could not find employee details.") }
+                    _uiState.update {
+                        it.copy(
+                            error = "Could not find employee details.",
+                            checkingInGuestId = null
+                        )
+                    }
                     return@launch
                 }
 
@@ -77,16 +86,15 @@ class PreRegisteredViewModel @Inject constructor(
                     visitorCompany = guest.visitorCompany ?: "",
                     visitorNames = listOf(guest.visitorName)
                 )
-
                 val success = visitorLogRepository.logCheckIn(
                     checkInRequest = request,
                     employeeFirestoreId = employee.id,
                     employeeName = "${employee.firstName} ${employee.lastName}"
                 )
-
                 if (success) {
-                    preregistrationCollection.document(guest.id).update("status", "checkedIn").await()
-                    fetchPendingGuests()
+                    preregistrationCollection.document(guest.id).update("status", "checkedIn")
+                        .await()
+                    onCheckInComplete()
                 } else {
                     _uiState.update { it.copy(error = "Failed to send notification.") }
                 }
@@ -94,7 +102,10 @@ class PreRegisteredViewModel @Inject constructor(
             } catch (e: Exception) {
                 Log.e("PreRegViewModel", "Error checking in guest", e)
                 _uiState.update { it.copy(error = "Failed to check in guest: ${e.message}") }
+            } finally {
+                _uiState.update { it.copy(checkingInGuestId = null) }
             }
         }
     }
 }
+

@@ -44,14 +44,11 @@ import java.io.File
 @Composable
 fun EmployeeSelectScreen(
     viewModel: EmployeeSelectViewModel = hiltViewModel(),
-    onEmployeeSelected: (String) -> Unit // CHANGED: Parameter type from Int to String
+    onEmployeeSelected: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    // Filtered employees logic is now handled in the ViewModel's combine
-    // So, we use uiState.allEmployees directly and search logic is implicitly applied
-    // based on how uiState.allEmployees is set up in the ViewModel.
-    val employeesToDisplay = uiState.allEmployees // This will already be filtered by the ViewModel's combine logic
+    val employeesToDisplay =
+        uiState.allEmployees
 
     Column(
         modifier = Modifier
@@ -85,8 +82,7 @@ fun EmployeeSelectScreen(
         )
         Spacer(Modifier.height(16.dp))
 
-        // Check if the list is empty and show a message
-        if (employeesToDisplay.isEmpty() && uiState.searchQuery.isNotEmpty()) { // If search query, and no results
+        if (employeesToDisplay.isEmpty() && uiState.searchQuery.isNotEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -97,7 +93,7 @@ fun EmployeeSelectScreen(
                     textAlign = TextAlign.Center
                 )
             }
-        } else if (employeesToDisplay.isEmpty() && uiState.searchQuery.isBlank()){ // If no search and no employees
+        } else if (employeesToDisplay.isEmpty() && uiState.searchQuery.isBlank()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -108,18 +104,17 @@ fun EmployeeSelectScreen(
                     textAlign = TextAlign.Center
                 )
             }
-        }
-        else {
+        } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = 8.dp, horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                items(employeesToDisplay, key = { it.id }) { employee -> // employee.id is String
+                items(employeesToDisplay, key = { it.id }) { employee ->
                     EmployeeListItem(
                         employee = employee,
-                        onSelected = { onEmployeeSelected(employee.id) } // CHANGED: Pass employee.id (String)
+                        onSelected = { onEmployeeSelected(employee.id) }
                     )
                 }
             }
@@ -129,7 +124,7 @@ fun EmployeeSelectScreen(
 
 @Composable
 fun EmployeeListItem(
-    employee: com.exposystems.welcomewave.data.model.Employee, // CHANGED: Ensure correct Employee model
+    employee: com.exposystems.welcomewave.data.model.Employee,
     onSelected: () -> Unit
 ) {
     Card(
@@ -143,15 +138,14 @@ fun EmployeeListItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
-                // Updated to use employee.photoUrl and handle local file paths if necessary
                 model = employee.photoUrl?.let { path ->
                     if (path.startsWith("content://") || path.startsWith("http")) {
                         path
                     } else {
-                        File(path).toUri() // Convert local file path to Uri for Coil
+                        File(path).toUri()
                     }
                 },
-                contentDescription = "${employee.firstName} ${employee.lastName} photo", // CHANGED: Use first/last name
+                contentDescription = "${employee.firstName} ${employee.lastName} photo",
                 placeholder = painterResource(id = R.drawable.avatar_placeholder),
                 error = painterResource(id = R.drawable.avatar_placeholder),
                 modifier = Modifier
@@ -160,14 +154,13 @@ fun EmployeeListItem(
                 contentScale = ContentScale.Crop
             )
             Spacer(Modifier.width(16.dp))
+
             Column {
                 Text(
-                    // CHANGED: Use firstName and lastName
                     text = "${employee.firstName} ${employee.lastName}",
                     style = MaterialTheme.typography.headlineLarge
                 )
                 Text(
-                    // CHANGED: Handle nullable title
                     text = employee.title ?: "",
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)

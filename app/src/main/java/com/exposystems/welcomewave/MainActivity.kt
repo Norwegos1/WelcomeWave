@@ -62,10 +62,16 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    // UPDATED #2: Added the new composable destination
                     composable(Screen.PreRegisteredGuestList.route) {
                         PreRegisteredGuestListScreen(
-                            onNavigateUp = { navController.navigateUp() }
+                            onNavigateUp = { navController.navigateUp() },
+                            // UPDATED: Add the check-in complete navigation action
+                            onCheckInComplete = {
+                                navController.navigate(Screen.Confirmation.route) {
+                                    // Clear the back stack up to the Welcome screen
+                                    popUpTo(Screen.Welcome.route)
+                                }
+                            }
                         )
                     }
 
@@ -77,7 +83,6 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    // --- Admin Flow ---
                     composable(Screen.AdminLogin.route) {
                         AdminLoginScreen(
                             onLoginSuccess = {
