@@ -12,7 +12,7 @@ import javax.inject.Singleton
 
 @Singleton
 class EmployeeRepository @Inject constructor(
-    @Suppress("UnusedPrivateProperty") // Suppress lint warning for injected property used internally
+    @Suppress("UnusedPrivateProperty")
     private val firestore: FirebaseFirestore
 ) {
     private val employeesCollection = firestore.collection("employees")
@@ -26,17 +26,20 @@ class EmployeeRepository @Inject constructor(
             .orderBy("firstName")
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
-                    close(e) // Close the flow with the error if an exception occurs
-                    Log.e("EmployeeRepository", "Error getting real-time employees: ${e.message}", e)
+                    close(e)
+                    Log.e(
+                        "EmployeeRepository",
+                        "Error getting real-time employees: ${e.message}",
+                        e
+                    )
                     return@addSnapshotListener
                 }
 
                 if (snapshot != null) {
                     val employees = snapshot.toObjects(Employee::class.java)
-                    trySend(employees).isSuccess // Send the updated list to the flow
+                    trySend(employees).isSuccess
                 }
             }
-        // Ensure the Firestore listener is removed when the flow is no longer collected
         awaitClose { subscription.remove() }
     }
 

@@ -7,29 +7,42 @@ import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
+/**
+ * Hilt module responsible for providing data-layer dependencies, such as repositories,
+ * to the rest of the application. This allows other parts of the app (like ViewModels)
+ * to get instances of these classes without needing to create them directly.
+ */
 @Module
-@InstallIn(SingletonComponent::class)
-object DataModule { // Renamed from DatabaseModule to DataModule for clarity
+@InstallIn(SingletonComponent::class) // Scopes the dependencies to the application's lifecycle.
+object DataModule {
 
-    // Provide the Firestore-based EmployeeRepository
+    /**
+     * Provides a single, application-wide instance of [EmployeeRepository].
+     * @param firestore The Firestore database instance, provided by another Hilt module.
+     * @return A singleton instance of EmployeeRepository for managing employee data.
+     */
     @Provides
     @Singleton
     fun provideEmployeeRepository(
-        firestore: FirebaseFirestore // Hilt will inject this from FirebaseModule
+        firestore: FirebaseFirestore
     ): EmployeeRepository {
         return EmployeeRepository(firestore)
     }
 
-    // Provide the Firestore-based VisitorLogRepository
+    /**
+     * Provides a single, application-wide instance of [VisitorLogRepository].
+     * @param firestore The Firestore database instance.
+     * @param notificationApiService The service responsible for making network calls to our email notification function.
+     * @return A singleton instance of VisitorLogRepository for logging visits and triggering notifications.
+     */
     @Provides
     @Singleton
     fun provideVisitorLogRepository(
-        firestore: FirebaseFirestore, // Hilt will inject this from FirebaseModule
-        notificationApiService: NotificationApiService // Hilt will inject this (ensure its own module provides it!)
+        firestore: FirebaseFirestore,
+        notificationApiService: NotificationApiService
     ): VisitorLogRepository {
         return VisitorLogRepository(firestore, notificationApiService)
     }

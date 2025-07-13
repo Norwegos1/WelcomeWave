@@ -5,7 +5,6 @@ sealed class Screen(val route: String) {
     data object EmployeeSelect : Screen("employee_select_screen")
     data object CheckOut : Screen("check_out_screen")
     data object GuestDetails : Screen("guest_details_screen/{employeeId}") {
-        // CHANGED: Accept String employeeId
         fun createRoute(employeeId: String) = "guest_details_screen/$employeeId"
     }
     object PreRegisteredGuestList : Screen("pre_registered_guest_list")
@@ -14,7 +13,6 @@ sealed class Screen(val route: String) {
     data object AdminEmployeeList : Screen("admin_employee_list_screen")
     data object AdminVisitorLog : Screen("admin_visitor_log_screen")
     data object AdminAddEditEmployee : Screen("admin_add_edit_employee_screen/{employeeId}") {
-        // CHANGED: Accept String employeeId
         fun createRoute(employeeId: String) = "admin_add_edit_employee_screen/$employeeId"
     }
 }

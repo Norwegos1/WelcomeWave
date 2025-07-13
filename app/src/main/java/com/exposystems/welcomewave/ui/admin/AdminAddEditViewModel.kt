@@ -16,7 +16,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * UI state for the Add/Edit Employee screen.
+ * Represents the state of the Add/Edit Employee screen. It holds all the properties
+ * that the UI needs to display, such as input field values and loading/error states.
  */
 data class AddEditUiState(
     val firstName: String = "",
@@ -32,35 +33,54 @@ data class AddEditUiState(
     val isNewEmployee: Boolean = false
 )
 
+/**
+ * The ViewModel for the [AdminAddEditEmployeeScreen].
+ * It is responsible for holding the screen's state, handling user input,
+ * and communicating with the [EmployeeRepository] to save or update data.
+ */
 @HiltViewModel
 class AdminAddEditViewModel @Inject constructor(
     private val employeeRepository: EmployeeRepository,
-    savedStateHandle: SavedStateHandle,
+    savedStateHandle: SavedStateHandle, // Used to retrieve navigation arguments like the employee ID.
     @Suppress("unused") @ApplicationContext private val application: Context
 ) : ViewModel() {
 
+    /**
+     * The single source of truth for the UI. The @Composable screen observes this
+     * state and recomposes whenever it changes.
+     */
     var uiState by mutableStateOf(AddEditUiState())
-        private set
+        private set // The state can only be modified within this ViewModel.
 
+    // Holds the ID of the employee being edited. It's null if we are adding a new employee.
     private var existingEmployeeId: String? = null
 
     init {
+        // When the ViewModel is created, get the employeeId passed from the previous screen.
         existingEmployeeId = savedStateHandle["employeeId"]
+
+        // Check if we are editing an existing employee or adding a new one.
         if (existingEmployeeId != null && existingEmployeeId != "-1") {
-            // Logic for editing an existing employee
+            // If an ID is present, we are in "edit mode".
             uiState = uiState.copy(isNewEmployee = false)
             loadEmployee(existingEmployeeId!!)
         } else {
-            // Logic for adding a new employee
+            // If no ID is present, we are in "add mode".
             uiState = uiState.copy(isNewEmployee = true)
         }
     }
 
+    /**
+     * Fetches the details of a specific employee from the repository and updates
+     * the UI state to populate the form fields for editing.
+     * @param id The Firestore document ID of the employee to load.
+     */
     private fun loadEmployee(id: String) {
         viewModelScope.launch {
             uiState = uiState.copy(isLoading = true, showError = false)
             try {
                 employeeRepository.getEmployeeById(id)?.let { employee ->
+                    // If the employee is found, update the state with their details.
                     uiState = uiState.copy(
                         firstName = employee.firstName,
                         lastName = employee.lastName,
@@ -72,13 +92,25 @@ class AdminAddEditViewModel @Inject constructor(
                         isLoading = false
                     )
                 } ?: run {
-                    uiState = uiState.copy(showError = true, errorMessage = "Employee not found.", isLoading = false)
+                    // If no employee is found with that ID, show an error.
+                    uiState = uiState.copy(
+                        showError = true,
+                        errorMessage = "Employee not found.",
+                        isLoading = false
+                    )
                 }
             } catch (e: Exception) {
-                uiState = uiState.copy(showError = true, errorMessage = "Error loading employee: ${e.message}", isLoading = false)
+                // Handle any exceptions during the data fetching process.
+                uiState = uiState.copy(
+                    showError = true,
+                    errorMessage = "Error loading employee: ${e.message}",
+                    isLoading = false
+                )
             }
         }
     }
+
+    // --- The following functions handle user input from the UI ---
 
     fun onFirstNameChange(name: String) {
         uiState = uiState.copy(firstName = name, showError = false, errorMessage = null)
@@ -105,38 +137,48 @@ class AdminAddEditViewModel @Inject constructor(
     }
 
     /**
-     * Handles selection of a photo URI (e.g., from gallery).
-     * In a real app, this would trigger an upload to Firebase Storage.
+     * Handles the URI of a photo selected from the device's gallery.
+     * This function currently saves the URI as a string. A full implementation
+     * would involve uploading the image file to Firebase Storage and then
+     * saving the resulting download URL.
+     * @param uri The content URI of the selected photo.
      */
     fun onPhotoSelected(uri: Uri?) {
         if (uri == null) return
 
         viewModelScope.launch {
+            // Convert the content URI to a persistent string path for the state.
             val photoPath = uri.toString()
             uiState = uiState.copy(photoUrl = photoPath)
         }
     }
 
     /**
-     * Handles saving a new or updated employee.
-     * @param onNavigateUp Callback to navigate back on successful save.
+     * Validates user input and saves a new or updated employee to the repository.
+     * @param onNavigateUp Callback to navigate back to the previous screen on successful save.
      */
     fun onSaveEmployeeClicked(onNavigateUp: () -> Unit) {
-        // Basic validation for required fields
+        // --- Validation Step ---
         if (uiState.firstName.isBlank() || uiState.lastName.isBlank() || uiState.email.isBlank()) {
-            uiState = uiState.copy(showError = true, errorMessage = "First Name, Last Name, and Email are required.")
-            return
+            uiState = uiState.copy(
+                showError = true,
+                errorMessage = "First Name, Last Name, and Email are required."
+            )
+            return // Stop the function if validation fails.
         }
-        // Basic email format validation
+        // Basic email format validation using Android's built-in email pattern.
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(uiState.email).matches()) {
-            uiState = uiState.copy(showError = true, errorMessage = "Please enter a valid email address.")
+            uiState =
+                uiState.copy(showError = true, errorMessage = "Please enter a valid email address.")
             return
         }
 
+        // --- Save Operation ---
         uiState = uiState.copy(isLoading = true, showError = false, errorMessage = null)
 
         viewModelScope.launch {
             try {
+                // Decide whether to add a new employee or update an existing one.
                 if (uiState.isNewEmployee) {
                     val newEmployee = Employee(
                         firstName = uiState.firstName.trim(),
@@ -150,7 +192,7 @@ class AdminAddEditViewModel @Inject constructor(
                     employeeRepository.addEmployee(newEmployee)
                 } else {
                     val updatedEmployee = Employee(
-                        id = existingEmployeeId!!,
+                        id = existingEmployeeId!!, // Use the ID of the employee we are editing.
                         firstName = uiState.firstName.trim(),
                         lastName = uiState.lastName.trim(),
                         email = uiState.email.trim(),
@@ -161,10 +203,16 @@ class AdminAddEditViewModel @Inject constructor(
                     )
                     employeeRepository.updateEmployee(updatedEmployee)
                 }
+                // If the save is successful, stop loading and navigate up.
                 uiState = uiState.copy(isLoading = false)
-                onNavigateUp() // Navigate back on success
+                onNavigateUp()
             } catch (e: Exception) {
-                uiState = uiState.copy(isLoading = false, showError = true, errorMessage = "Failed to save employee: ${e.message}")
+                // If an error occurs during the save, show an error message.
+                uiState = uiState.copy(
+                    isLoading = false,
+                    showError = true,
+                    errorMessage = "Failed to save employee: ${e.message}"
+                )
             }
         }
     }

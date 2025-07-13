@@ -6,15 +6,14 @@ import java.util.Date
 
 data class VisitorLog(
     @DocumentId
-    val id: String = "", // Document ID for this log entry
+    val id: String = "",
     val visitorName: String = "",
-    val companyName: String? = null, // Optional
-    val purposeOfVisit: String? = null, // Optional
-    val employeeVisitedId: String = "", // ID of the employee they visited (links to Employee document)
-    // Denormalized: For easier display without an extra query to the 'employees' collection
+    val companyName: String? = null,
+    val purposeOfVisit: String? = null,
+    val employeeVisitedId: String = "",
     val employeeVisitedName: String = "",
     @ServerTimestamp
-    val checkInTime: Date? = null, // Server timestamp for check-in
-    val checkOutTime: Date? = null, // Nullable for when visitor hasn't checked out yet
-    val hasCheckedOut: Boolean = false // Flag for check-out status
+    val checkInTime: Date? = null,
+    val checkOutTime: Date? = null,
+    val hasCheckedOut: Boolean = false
 )

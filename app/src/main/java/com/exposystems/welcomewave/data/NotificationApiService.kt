@@ -5,7 +5,7 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 
 interface NotificationApiService {
-    @POST(".") // Change this to a dot
+    @POST(".")
     suspend fun sendCheckInNotification(
         @Body request: CheckInRequest
     ): Response<Unit>

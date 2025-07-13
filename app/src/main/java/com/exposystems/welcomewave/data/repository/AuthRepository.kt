@@ -33,23 +33,6 @@ class AuthRepository @Inject constructor(
     }
 
     /**
-     * Registers a new user with email and password.
-     * @return The newly created FirebaseUser or null on failure.
-     */
-    // Removed based on earlier discussion (public admin registration disabled for now)
-    /*
-    suspend fun registerUser(email: String, password: String): FirebaseUser? {
-        return try {
-            val result = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
-            result.user
-        } catch (e: Exception) {
-            Log.e("AuthRepository", "Error registering user: ${e.message}", e)
-            null
-        }
-    }
-    */
-
-    /**
      * Logs in an existing user with email and password.
      * @return The logged-in FirebaseUser or null on failure.
      */
@@ -90,5 +73,4 @@ class AuthRepository @Inject constructor(
             false
         }
     }
-    // --- END NEW ---
 }

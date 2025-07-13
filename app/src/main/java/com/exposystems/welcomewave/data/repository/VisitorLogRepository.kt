@@ -17,11 +17,10 @@ import javax.inject.Singleton
 
 @Singleton
 class VisitorLogRepository @Inject constructor(
-    private val firestore: FirebaseFirestore,
+    firestore: FirebaseFirestore,
     @Suppress("UnusedPrivateProperty")
     private val notificationApiService: NotificationApiService
 ) {
-    // Reference to the "visitorLogs" collection in Firestore
     private val visitorLogsCollection = firestore.collection("visitorLogs")
 
     /**
@@ -29,19 +28,18 @@ class VisitorLogRepository @Inject constructor(
      */
     fun getAllVisitorLogs(): Flow<List<VisitorLog>> = callbackFlow {
         val subscription = visitorLogsCollection
-            .orderBy("checkInTime", Query.Direction.DESCENDING) // Order by latest check-in first
+            .orderBy("checkInTime", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
-                    close(e) // Close the flow with the error if an exception occurs
+                    close(e)
                     return@addSnapshotListener
                 }
 
                 if (snapshot != null) {
                     val logs = snapshot.toObjects(VisitorLog::class.java)
-                    trySend(logs).isSuccess // Send the updated list to the flow
+                    trySend(logs).isSuccess
                 }
             }
-        // Ensure the listener is removed when the flow is no longer collected
         awaitClose { subscription.remove() }
     }
 
@@ -50,8 +48,8 @@ class VisitorLogRepository @Inject constructor(
      */
     fun getCurrentlyCheckedInVisitors(): Flow<List<VisitorLog>> = callbackFlow {
         val subscription = visitorLogsCollection
-            .whereEqualTo("hasCheckedOut", false) // Filter for not checked out
-            .orderBy("checkInTime", Query.Direction.ASCENDING) // Order by oldest check-in first
+            .whereEqualTo("hasCheckedOut", false)
+            .orderBy("checkInTime", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
                     close(e)
@@ -111,12 +109,15 @@ class VisitorLogRepository @Inject constructor(
             ).await()
             true
         } catch (e: Exception) {
-            Log.e("VisitorLogRepository", "Error logging check-out for $visitorLogId: ${e.message}", e)
+            Log.e(
+                "VisitorLogRepository",
+                "Error logging check-out for $visitorLogId: ${e.message}",
+                e
+            )
             false
         }
     }
 
-    // Suppress "unused" warning for this function as it's a utility that might be used later
     @Suppress("unused")
     suspend fun getVisitorLogById(logId: String): VisitorLog? {
         return try {
